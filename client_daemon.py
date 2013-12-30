@@ -4,6 +4,8 @@ import monitor_list
 import os,commands 
 import pickle
 
+server_address = '192.168.91.19'
+block_list = []
 '''
 status_file = 'state/monitor_status.pkl'
 if os.path.exists(status_file):
@@ -17,10 +19,14 @@ else:
 class MyTCPHandler(SocketServer.BaseRequestHandler):
     def handle(self):
         # self.request is the TCP socket connected to the client
-	if self.client_address[0] != '192.168.2.245':
+	if self.client_address[0] != server_address:
 		err_msg= "\033[31;1mIP %s not allowed to connect this server!\033[0m" % self.client_address[0]
-		self.request.sendall(err_msg)
+		pickle_data = '', err_msg
+		self.request.sendall( pickle.dumps(pickle_data)  )
 		print err_msg 
+		block_list.append(self.client_address[0])
+		if block_list.count(self.client_address[0]) > 5:
+			print "Alert::malicious attack from:" , self.client_address[0]
 	else:
 		self.data = self.request.recv(1024).strip()
 		print "{} wrote:",self.client_address[0]

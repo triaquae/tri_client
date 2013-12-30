@@ -4,12 +4,17 @@ import commands,sys,pickle
 
 unsupported_cmds = ['vi']
 
+
+if len(sys.argv) <2:
+	print 'Argument needed, run -h for help.'	
+	sys.exit()
 if '-cmd' in sys.argv:
 	cmd = sys.argv[sys.argv.index('-cmd')  + 1]
 	job_action = 'CMD_Excution'
 
 
-HOST = '192.168.2.24'    # The remote host
+#HOST = '192.168.2.24'    # The remote host
+HOST = '192.168.91.190'    # The remote host
 def jobRunner(action,host,job):
 	PORT = 9999  
 	try:
@@ -28,7 +33,7 @@ def jobRunner(action,host,job):
 		s.sendall('%s| %s ' %(action, job) )
 		return_data = ''
 		while True:
-			data = s.recv(10)
+			data = s.recv(4096)
 			if not data:break
 			return_data += data
 		cmd_status,result = pickle.loads(return_data)

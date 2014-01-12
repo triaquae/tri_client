@@ -28,11 +28,15 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
                 else:
                         return None
         def receive_data(sock):
-                return_data = ''
+		return_data ='' 
                 while True:
                         data = sock.recv(4096)
-                        if not data:break
+			#print '\033[36;1m%s\033[0m' %data
+			if data == 'EndOfDataConfirmationMark':
+				print 'file transfer done==='
+				break
                         return_data += data
+		#print '\033[34;1m=====\033[0m',return_data
                 return return_data
         # self.request is the TCP socket connected to the client
 	if self.client_address[0] != server_address:
@@ -53,15 +57,20 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
 			self.request.sendall(pickle.dumps( (cmd_status,result) ))
 		if self.data.startswith('RUN_Script|'):
 			filename = "%s%s " %(recv_dir,self.data.split('|')[1])
+			print filename,'+++'
 			md5_key_from_client = self.data.split('|')[2]
 			file_content = receive_data(self.request)
+			print 'write data into file....'
 			with open(filename, 'wb') as f:
 				f.write(file_content)
 			md5_key= md5_file(filename )
-			if md5_key == md5_key_from_client:		
+			print '===verfiy status---',md5_key, md5_key_from_client
+			if md5_key == md5_key_from_client:	
 				print 'file transfer verification ok' 
+				self.request.send('FileTransferComplete')	
 			else:
 				print "file not complete"
+				self.request.send('FileTransferNotComplete')	
 		if self.client_address[0] == "127.0.0.1":
 			print "going to serialize Monitor_dic"
 		if self.data == 'getHardwareInfo':

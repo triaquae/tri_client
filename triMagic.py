@@ -3,7 +3,7 @@ import socket,time,os
 from hashlib import md5
 import commands,sys,pickle,json
 from django.core.exceptions import ObjectDoesNotExist
-import db_connector
+import db_connector, file_transfer
 
 
 unsupported_cmds = ['vi']
@@ -72,8 +72,21 @@ def jobRunner(action,host,job):
 			script_name = script.split('/')[-1]
 			print script_name,'===='
 			s.send('%s|%s|%s' %(action, script_name,md5_key ))
+			file_content = ''
 			with open(script, 'rb') as f:
-				s.sendall(f.read())
+				file_content = f.read()
+			#print '\033[36;1m%s\033[0m' % file_content
+			time.sleep(1)
+			s.sendall(file_content)
+			print '-------verify status'
+			time.sleep(1)
+			s.send('EndOfDataConfirmationMark')
+			fileTransferStatus = s.recv(100)
+			print fileTransferStatus
+			if fileTransferStatus == 'FileTransferComplete':
+				print 'FileTransferComplete'
+			elif fileTransferStatus == 'FileTransferNotComplete' :
+				print 'FileTransferisNotComplete' 
 			s.close()
 		else:
 			print 'script file not found!'

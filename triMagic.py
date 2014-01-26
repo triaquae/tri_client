@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # Monitoring  client program
 import socket,time,os
 from hashlib import md5
@@ -11,14 +12,23 @@ unsupported_cmds = ['vi']
 socket.setdefaulttimeout(15)
 
 HOST = '192.168.2.246'    # The remote host
-def jobRunner(action,host,job):
+def md5_file(filename):
+	if os.path.isfile(filename):
+		m = md5()
+		with open(filename, 'rb') as f:
+			m.update(f.read())
+		return m.hexdigest()
+	else:
+		return None
+
+def jobRunner(action,host,job,data=None):
         PORT = 9999
         try:
-                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                s.connect((host.ip, PORT))
+        	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        	s.connect((host.ip, PORT))
         except socket.error, e:
                 print '\033[31;1mError:%s -------> %s\033[0m' %(host.hostname,e)
-                sys.exit()
+               	return 'socket err' 
         def receive_data(sock):
                 return_data = ''
                 while True:
@@ -26,14 +36,6 @@ def jobRunner(action,host,job):
                         if not data:break
                         return_data += data
                 return return_data
-	def md5_file(filename):
-		if os.path.isfile(filename):
-			m = md5()
-			with open(filename, 'rb') as f:
-				m.update(f.read())	
-			return m.hexdigest()
-		else:
-			return None	
         if action == 'CMD_Excution':
                 for cmd in unsupported_cmds:
                         if job.strip().startswith(cmd):
@@ -68,53 +70,47 @@ def jobRunner(action,host,job):
 		script = job
 		md5_key =  md5_file(script)
 		if md5_key is not None:
-			print md5_key
 			script_name = script.split('/')[-1]
-			print script_name,'===='
+			print '++++++|sending script \033[34;1m%s\033[0m to %s:'% (script_name,host.hostname)
 			s.send('%s|%s|%s' %(action, script_name,md5_key ))
 			file_content = ''
 			with open(script, 'rb') as f:
 				file_content = f.read()
 			#print '\033[36;1m%s\033[0m' % file_content
-			time.sleep(1)
+			time.sleep(0.5)
 			s.sendall(file_content)
-			print '-------verify status'
+			#print '++++++|Sending complete,virifiying file completion status'
 			time.sleep(1)
 			s.send('EndOfDataConfirmationMark')
 			fileTransferStatus = s.recv(100)
-			print fileTransferStatus
 			if fileTransferStatus == 'FileTransferComplete':
-				print 'FileTransferComplete'
-			elif fileTransferStatus == 'FileTransferNotComplete' :
-				print 'FileTransferisNotComplete' 
+				print '\033[33;1mStart running %s on %s,check the log recv/%s.log on client side.\033[0m' %(script,host.hostname,script)
+			elif fileTransferStatus == 'FileTransferNotComplete' : 
+				print 'FileTransfer to %s Failed!' % host.hostname
 			s.close()
 		else:
 			print 'script file not found!'
 			s.close()
 
-def multi_job():
+def multi_job(hosts,task,argument,file_data = None):
 	import multiprocessing
 	# batch run process
 
 	result = []
-	def run(host):
-		task = '''%s %s '%s' %s %s''' % (script,host,cmd,run_user,track_num)
-		os.system(task)
-
-	if len(ip_list) < 50:
-		thread_num = len(ip_list)
+	
+	if len(hosts) < 50:
+		thread_num = len(hosts)
 	else:
-		thread_num = 30
+		thread_num = 50
 	pool = multiprocessing.Pool(processes=thread_num)
 
-	for ip in ip_list:
-		result.append(pool.apply_async(run,(ip,)) )
-	#time.sleep(5)
-	#pool.terminate()
+	for h in hosts:
+		#jobRunner(job_action, hosts[0], script)
+		#result.append(pool.apply_async(run,(h,)) )
+		result.append(pool.apply_async(jobRunner,(task,h,argument, file_data)) )
 
 	pool.close()
 	pool.join()
-
 
 	for res in result:
 		res.get(timeout=5)
@@ -129,6 +125,7 @@ if len(sys.argv) <2:
 		show detail YourHostName
 -filter 	os='linux'
 
+-u user		run command or script by user followed after -u 
 -script 	run script on remote client
  """
 	print help_msg
@@ -175,8 +172,11 @@ elif '-script' in sys.argv:
 	print hosts
 	script = sys.argv[sys.argv.index('-script')  + 1]
 	job_action = 'RUN_Script'
-	jobRunner(job_action, hosts[0], script)
-	print script 
+	if len(hosts) > 1: # kick off multi jobs
+		multi_job(hosts, job_action, script )
+	else:
+		jobRunner(job_action, hosts[0], script)
+	#def multi_job(hosts,task,argument):
 elif '-show' in sys.argv:
 	item = sys.argv[sys.argv.index('-show')  + 1]
 	def showItem(item_name):

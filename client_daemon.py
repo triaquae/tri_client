@@ -1,7 +1,7 @@
 import SocketServer,time
 import pickle
 import monitor_list
-import os,commands 
+import os,commands,stat
 from hashlib import md5
 recv_dir = 'recv/'
 
@@ -56,18 +56,25 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
 			print 'host:%s \tcmd:%s \tresult:%s' %(self.client_address[0], cmd, cmd_status)	
 			self.request.sendall(pickle.dumps( (cmd_status,result) ))
 		if self.data.startswith('RUN_Script|'):
-			filename = "%s%s " %(recv_dir,self.data.split('|')[1])
-			print filename,'+++'
+			recv_data= self.data
+			filename = "%s%s" %(recv_dir,recv_data.split('|')[1].strip())
+			print '+++++|receiving file from server:',filename
 			md5_key_from_client = self.data.split('|')[2]
 			file_content = receive_data(self.request)
 			print 'write data into file....'
 			with open(filename, 'wb') as f:
 				f.write(file_content)
 			md5_key= md5_file(filename )
-			print '===verfiy status---',md5_key, md5_key_from_client
+			print '+++++|verfiying md5key---'
 			if md5_key == md5_key_from_client:	
 				print 'file transfer verification ok' 
 				self.request.send('FileTransferComplete')	
+				os.system('chmod +rx %s ' % filename)
+				#os.chmod(filename,stat.S_IREAD+stat.S_IWOTH+stat.S_IXUSR+stat.S_IRWXO)
+				cmd = "nohup  %s > %s.log &" % (filename, filename)
+				print '\033[32;1mgoing to run script:\033[0m',cmd
+				result = os.system(cmd )
+				#print result,'||||+|||'
 			else:
 				print "file not complete"
 				self.request.send('FileTransferNotComplete')	

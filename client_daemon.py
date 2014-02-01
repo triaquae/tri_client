@@ -51,7 +51,8 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
 		self.data = self.request.recv(1024).strip()
 		print "{} wrote:",self.client_address[0]
 		if self.data.startswith('CMD_Excution|'):
-			cmd = self.data.split('CMD_Excution|')[1]
+			cmd= self.data.split('CMD_Excution|')[1]
+			print cmd,'=====|||||'
 			cmd_status,result = commands.getstatusoutput(cmd)	
 			print 'host:%s \tcmd:%s \tresult:%s' %(self.client_address[0], cmd, cmd_status)	
 			self.request.sendall(pickle.dumps( (cmd_status,result) ))

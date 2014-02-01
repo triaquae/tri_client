@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # Monitoring  client program
-import socket,time,os
+import socket,time,os,getpass
 from hashlib import md5
 import commands,sys,pickle,json
 from django.core.exceptions import ObjectDoesNotExist
@@ -10,6 +10,20 @@ import db_connector, file_transfer
 unsupported_cmds = ['vi']
 
 socket.setdefaulttimeout(15)
+
+help_msg ="""Avaliable arguments:
+\033[32;1m
+--help          show helps
+--cmd           run command
+--show          show groups
+                show group YourGroupName
+                show detail YourHostName
+--filter        filter options: os, hostname, ip
+		e.g. os=linux,  hostname='web' ,  ip="192.168" 
+-h host         hostname,multiple host separator is,e.g. "host1, host2, host3" 
+-g group        group name,multiple group separator is ,e.g. "group1,group2"
+--script        run script on remote client
+ \033[0m"""
 
 HOST = '192.168.2.246'    # The remote host
 def md5_file(filename):
@@ -27,7 +41,8 @@ def jobRunner(action,host,job,data=None):
         	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         	s.connect((host.ip, PORT))
         except socket.error, e:
-                print '\033[31;1mError:%s -------> %s\033[0m' %(host.hostname,e)
+		line_len = (25 - len(host.hostname)) * '-'
+                print '\033[31;1m%s %s> %s\033[0m' %(host.hostname,line_len,e)
                	return 'socket err' 
         def receive_data(sock):
                 return_data = ''
@@ -43,13 +58,13 @@ def jobRunner(action,host,job,data=None):
                                 return '1'
                 if job.strip().startswith('top'):
                         job= 'top -bn1 |head -n 25'
-                s.sendall('%s| %s ' %(action, job) )
+                s.sendall('%s| %s' %(action, job) )
                 return_data = receive_data(s)
                 cmd_status,result = pickle.loads(return_data)
                 if cmd_status == 0:
-                        print '\033[32;1m%s\t\t  result:OK \t%s\033[0m' % (host,cmd_status)
+                        print '\033[32;1m%s\t\t  result:OK \t%s\033[0m' % (host.hostname,cmd_status)
                 else:
-                        print '\033[31;1m%s\t\t  result:ERROR \t%s\033[0m' % (host,cmd_status)
+                        print '\033[31;1m%s\t\t  result:ERROR \033[0m' % host.hostname
 
                 print result
                 s.close()
@@ -95,7 +110,6 @@ def jobRunner(action,host,job,data=None):
 def multi_job(hosts,task,argument,file_data = None):
 	import multiprocessing
 	# batch run process
-
 	result = []
 	
 	if len(hosts) < 50:
@@ -117,19 +131,10 @@ def multi_job(hosts,task,argument,file_data = None):
 
 
 if len(sys.argv) <2:
-	print 'Argument needed, run -h for help.'	
-	help_msg ="""Avaliable arguments:
--cmd		run command
--show   	show groups
-		show group YourGroupName
-		show detail YourHostName
--filter 	os='linux'
-
--u user		run command or script by user followed after -u 
--script 	run script on remote client
- """
+	print 'Argument needed, run --help for help.'	
 	print help_msg
 	sys.exit()
+
 
 def virify_argument():
     try:
@@ -137,16 +142,16 @@ def virify_argument():
 	host_list = []
 	if '-h' in sys.argv:
 		argv = '-h'
-		argument  = sys.argv[ sys.argv.index( argv) +1 ].split()
+		argument  = sys.argv[ sys.argv.index( argv) +1 ].split(',')
 		for host in argument:
 			try:
-				host_list.append( db_connector.IP.objects.get(hostname = host) )
+				host_list.append( db_connector.IP.objects.get(hostname = host.strip()) )
 			except ObjectDoesNotExist:
 				print "Error: host %s is not exist in the database" % host
 				sys.exit()		
 	elif '-g' in sys.argv:
 		argv = '-g'
-		argument  = sys.argv[ sys.argv.index( argv) +1 ].split()
+		argument  = sys.argv[ sys.argv.index( argv) +1 ].split(',')
 		for g in argument:
 			try:
 				host_list.extend( db_connector.IP.objects.filter(group__name= g) )
@@ -160,25 +165,60 @@ def virify_argument():
 	return host_list
     except IndexError:
 	print 'Error: take exactly 1 argument after %s, but 0 given!' % argv
-		
-if '-cmd' in sys.argv:
+	sys.exit()
+def virify_runUser():
+  try:
+	if '-u' in sys.argv:
+		argv = '-u'
+		run_user = sys.argv[ sys.argv.index( argv) +1 ]
+		return run_user
+	else:
+		return None
+  except IndexError:
+	print "Error: no argument found after -u"
+	sys.exit()
+  		
+if '--cmd' in sys.argv:
 	hosts = virify_argument()
-	print hosts
-	cmd = sys.argv[sys.argv.index('-cmd')  + 1]
+	cmd = sys.argv[sys.argv.index('--cmd')  + 1]
+	if cmd.strip().startswith('sudo'):
+		password = getpass.getpass("\033[32;1mPassword:\033[0m")
+		cmd = "echo %s|sudo -S %s"% (password,cmd)
 	job_action = 'CMD_Excution'
-	jobRunner(job_action,hosts[0], cmd)
-elif '-script' in sys.argv:
+        if len(hosts) > 1: # kick off multi jobs
+                multi_job(hosts, job_action,cmd)
+        else:
+		jobRunner(job_action,hosts[0], cmd)
+elif '--script' in sys.argv:
 	hosts = virify_argument()
-	print hosts
-	script = sys.argv[sys.argv.index('-script')  + 1]
+	script = sys.argv[sys.argv.index('--script')  + 1]
 	job_action = 'RUN_Script'
 	if len(hosts) > 1: # kick off multi jobs
 		multi_job(hosts, job_action, script )
 	else:
 		jobRunner(job_action, hosts[0], script)
 	#def multi_job(hosts,task,argument):
-elif '-show' in sys.argv:
-	item = sys.argv[sys.argv.index('-show')  + 1]
+elif '--filter' in sys.argv:
+	try:
+		filters = sys.argv[sys.argv.index('--filter')  + 1].split('=')
+		filter_option,filter_argv = filters[0], filters[1]
+		if filter_option in ('os','hostname','ip'):
+		  if filter_option == 'os':
+		      for i in  db_connector.IP.objects.filter(os__contains=filter_argv):
+			print "%s\t\033[32;1m%s\033[0m"	%(i.hostname,i.os)
+		  elif filter_option == 'hostname':
+		      for i in  db_connector.IP.objects.filter(hostname__contains=filter_argv):
+			print "%s\t\033[32;1m%s\033[0m" %(i.ip,i.hostname)
+		  elif filter_option == 'ip':
+                      for i in  db_connector.IP.objects.filter(ip__contains=filter_argv):
+                        print "%s\t\033[32;1m%s\033[0m" %(i.hostname,i.ip)
+
+		else:
+			print help_msg
+	except IndexError:
+		print 'Error: no valid argument found after --filter' 
+elif '--show' in sys.argv:
+	item = sys.argv[sys.argv.index('--show')  + 1]
 	def showItem(item_name):
 		if item_name == 'groups':
 			search_result = db_connector.Group.objects.all()
@@ -214,7 +254,8 @@ elif '-show' in sys.argv:
 				jobRunner('getHardwareInfo',i,'' )
 	showItem(item)
 	sys.exit()
-
+else:
+	print help_msg	
 """
 def jobRunner(action,host,job):
 	PORT = 9999  

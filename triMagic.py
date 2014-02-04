@@ -5,7 +5,7 @@ from hashlib import md5
 import commands,sys,pickle,json
 from django.core.exceptions import ObjectDoesNotExist
 import db_connector, file_transfer
-
+import compress
 
 unsupported_cmds = ['vi']
 
@@ -20,12 +20,36 @@ help_msg ="""Avaliable arguments:
                 show detail YourHostName
 --filter        filter options: os, hostname, ip
 		e.g. os=linux,  hostname='web' ,  ip="192.168" 
--h host         hostname,multiple host separator is,e.g. "host1, host2, host3" 
+-h host         hostname,multiple host separator is,e.g. "host1, host2, host3",'ALL' means all hosts
 -g group        group name,multiple group separator is ,e.g. "group1,group2"
+--send 		send file to remote 
+		e.g. --send  'local_filename1,local_filename2'  '/remote_path/'
 --script        run script on remote client
  \033[0m"""
 
-HOST = '192.168.2.246'    # The remote host
+
+def no_valid_argv(option):
+	print "\033[31;1mError:no valid argument found after:\033[0m",option
+	sys.exit()
+
+def print_output(string,output_type):
+	if output_type == 'success':
+		print '\033[32;1m%s\033[0m' % string
+	elif output_type == 'error':
+                print '\033[31;1m%s\033[0m' % string
+	elif output_type == 'warning':
+                print '\033[33;1m%s\033[0m' % string
+def virify_filesize(filename):
+  if os.path.isfile(filename):
+	if os.path.getsize(filename) /1024  >10000: #big than 10Mb
+	  if '-y' in sys.argv:
+		return True
+	  else:         
+		print 'File after compressing is still bigger than 10Mb,transfering big size file to multiple clients could be very slow, add -y option if you want proceed this.' 
+		sys.exit()
+	else:
+		return True
+
 def md5_file(filename):
 	if os.path.isfile(filename):
 		m = md5()
@@ -106,7 +130,40 @@ def jobRunner(action,host,job,data=None):
 		else:
 			print 'script file not found!'
 			s.close()
+	if action == 'SEND_FILE':
+		md5_key = data[0]
+		compress_mark = data[1]
+		local_filename,remote_path = job
+		s.send('SEND_FILE|%s|%s|%s|%s' % (md5_key,local_filename, remote_path, compress_mark) )
+		
+		with open(local_filename, 'rb') as f:
+		  sendingConfirmationSignal = s.recv(100)
+		  if sendingConfirmationSignal == "FileOk2Send":
+			print 'sending file to %s ....' % host.hostname
+		  else:
+			print_output('%s on %s' % (sendingConfirmationSignal,host.hostname), 'error')
+			return sendingConfirmationSignal
+		  while True:
+			data = f.read(4096)
+			if not data:break
+			s.send(data)
+		time.sleep(1)
+		s.send('EndOfDataConfirmationMark')
+		fileTransferStatus = s.recv(100)	
+                if fileTransferStatus == 'FileTransferComplete':
+		   print_output('Send file to %s succeed!' % host.hostname, 'success')
+		   """if compress_mark == 'tarAndCompressed':
+			print 'going to remove local temp file'
+			os.remove(local_filename) #remove .z file
+			os.remove(local_filename[:-2]) # remove .tar file
+		   elif compress_mark == 'compressed':
+			os.remove(local_filename) #remove .z file
+		   else:
+			print "what just happend? I don't trust my self."""
+                elif fileTransferStatus == 'FileTransferNotComplete' :
+                   print 'FileTransfer to %s Failed!' % host.hostname
 
+		s.close()
 def multi_job(hosts,task,argument,file_data = None):
 	import multiprocessing
 	# batch run process
@@ -143,7 +200,10 @@ def virify_argument():
 	if '-h' in sys.argv:
 		argv = '-h'
 		argument  = sys.argv[ sys.argv.index( argv) +1 ].split(',')
-		for host in argument:
+		if argument[0] == 'ALL':
+			host_list = db_connector.IP.objects.all()
+		else:
+		  for host in argument:
 			try:
 				host_list.append( db_connector.IP.objects.get(hostname = host.strip()) )
 			except ObjectDoesNotExist:
@@ -198,6 +258,44 @@ elif '--script' in sys.argv:
 	else:
 		jobRunner(job_action, hosts[0], script)
 	#def multi_job(hosts,task,argument):
+elif '--send' in sys.argv:
+	hosts = virify_argument()
+	try:
+		localfile = sys.argv[sys.argv.index('--send')  + 1].strip().split(',')
+		remote_path = sys.argv[sys.argv.index('--send')  + 2]
+		if not remote_path.strip().startswith('/'):
+			print 'remote path \033[31;1m%s\033[0m need to be absolute path, starts with /' % remote_path
+			sys.exit()
+		def decorate_file(filename_list):
+			  file_list = []
+			  for filename in filename_list:
+				if not os.path.isfile(filename):
+					print "Error:file %s not found or is a directory!" % filename
+					sys.exit()
+				else:
+					file_list.append( filename )
+			  print_output('compressing file......', 'success')
+			  if len(file_list) >1: 
+			  	tar_file = compress.tar(file_list,'temp/%s.tar' % file_list[0] )
+			  	compressed_file = '%s.z' % tar_file
+			  	compress.compress(tar_file, compressed_file)
+				os.remove(tar_file)
+			  	return compressed_file,os.path.getsize(compressed_file),'tarAndCompressed'
+			  else:
+				source_file = file_list[0].split('/')[-1]
+				compressed_file = 'temp/%s.z'  % source_file
+				compress.compress(file_list[0], compressed_file)
+			  	return compressed_file,os.path.getsize(compressed_file),'compressed'
+		filename,filesize, compress_mark = decorate_file(localfile)  
+		if virify_filesize(filename):
+			md5_key = md5_file(filename)
+			if len(hosts) >1:
+				multi_job(hosts,'SEND_FILE', (filename,remote_path),(md5_key,compress_mark))	
+			else:
+				jobRunner('SEND_FILE',hosts[0],(filename,remote_path),data=(md5_key,compress_mark))	  
+	except IndexError:
+		no_valid_argv('--send') 
+
 elif '--filter' in sys.argv:
 	try:
 		filters = sys.argv[sys.argv.index('--filter')  + 1].split('=')
@@ -218,7 +316,11 @@ elif '--filter' in sys.argv:
 	except IndexError:
 		print 'Error: no valid argument found after --filter' 
 elif '--show' in sys.argv:
-	item = sys.argv[sys.argv.index('--show')  + 1]
+	try:
+		item = sys.argv[sys.argv.index('--show')  + 1]
+	except IndexError:
+		print '\033[31;1mNo valid argument found!\033[0m'
+		sys.exit()
 	def showItem(item_name):
 		if item_name == 'groups':
 			search_result = db_connector.Group.objects.all()

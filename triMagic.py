@@ -94,6 +94,7 @@ def jobRunner(action,host,job,data=None):
                 s.close()
 
         if action == 'getHardwareInfo':
+		
                 s.send(action)
                 return_data = receive_data(s)
                 result = json.loads(return_data)
@@ -337,7 +338,10 @@ elif '--show' in sys.argv:
 		  except IndexError:
 			print '\033[31;1mGroup name required!\033[0m'
 		elif item_name == 'detail': 
-			search_text = sys.argv[sys.argv.index('detail')  + 1]	
+			try:
+				search_text = sys.argv[sys.argv.index('detail')  + 1]	
+			except IndexError:
+				no_valid_argv('detail')
 			ip_list = db_connector.IP.objects.filter(hostname__contains= search_text )	
 			print "General info"	
 			#for i in ip_list.values('hostname','ip','os','port','idc'):

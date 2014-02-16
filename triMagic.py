@@ -5,6 +5,7 @@ from hashlib import md5
 import commands,sys,pickle,json
 from django.core.exceptions import ObjectDoesNotExist
 import db_connector, file_transfer
+from TriAquae.hosts.models import * 
 import compress
 
 unsupported_cmds = ['vi']
@@ -202,11 +203,11 @@ def virify_argument():
 		argv = '-h'
 		argument  = sys.argv[ sys.argv.index( argv) +1 ].split(',')
 		if argument[0] == 'ALL':
-			host_list = db_connector.IP.objects.all()
+			host_list = IP.objects.all()
 		else:
 		  for host in argument:
 			try:
-				host_list.append( db_connector.IP.objects.get(hostname = host.strip()) )
+				host_list.append( IP.objects.get(hostname = host.strip()) )
 			except ObjectDoesNotExist:
 				print "Error: host %s is not exist in the database" % host
 				sys.exit()		
@@ -215,7 +216,7 @@ def virify_argument():
 		argument  = sys.argv[ sys.argv.index( argv) +1 ].split(',')
 		for g in argument:
 			try:
-				host_list.extend( db_connector.IP.objects.filter(group__name= g) )
+				host_list.extend( IP.objects.filter(group__name= g) )
 			except ObjectDoesNotExist:
 				print "Error: group %s is not exist in the database" % g
                                 sys.exit()
@@ -303,13 +304,13 @@ elif '--filter' in sys.argv:
 		filter_option,filter_argv = filters[0], filters[1]
 		if filter_option in ('os','hostname','ip'):
 		  if filter_option == 'os':
-		      for i in  db_connector.IP.objects.filter(os__contains=filter_argv):
+		      for i in  IP.objects.filter(os__contains=filter_argv):
 			print "%s\t\033[32;1m%s\033[0m"	%(i.hostname,i.os)
 		  elif filter_option == 'hostname':
-		      for i in  db_connector.IP.objects.filter(hostname__contains=filter_argv):
+		      for i in  IP.objects.filter(hostname__contains=filter_argv):
 			print "%s\t\033[32;1m%s\033[0m" %(i.ip,i.hostname)
 		  elif filter_option == 'ip':
-                      for i in  db_connector.IP.objects.filter(ip__contains=filter_argv):
+                      for i in  IP.objects.filter(ip__contains=filter_argv):
                         print "%s\t\033[32;1m%s\033[0m" %(i.hostname,i.ip)
 
 		else:
@@ -324,14 +325,14 @@ elif '--show' in sys.argv:
 		sys.exit()
 	def showItem(item_name):
 		if item_name == 'groups':
-			search_result = db_connector.Group.objects.all()
+			search_result = Group.objects.all()
 			for group in search_result:
-				ip_list = db_connector.IP.objects.filter(group__name = group)
+				ip_list = IP.objects.filter(group__name = group)
 				print "\033[32;1m%s  [%s]\033[0m" %(group.name,len(ip_list))
 		elif item_name == 'group':
 		  try:
 			group_name =sys.argv[sys.argv.index('group')  + 1]
-			ip_list = db_connector.IP.objects.filter(group__name = group_name)
+			ip_list = IP.objects.filter(group__name = group_name)
 			print "\033[32;1m%s  [%s]\033[0m" %(group_name,len(ip_list))
 			for ip in ip_list:
 				print "%s\t%s" %(ip.hostname,ip.ip)
@@ -342,11 +343,11 @@ elif '--show' in sys.argv:
 				search_text = sys.argv[sys.argv.index('detail')  + 1]	
 			except IndexError:
 				no_valid_argv('detail')
-			ip_list = db_connector.IP.objects.filter(hostname__contains= search_text )	
+			ip_list = IP.objects.filter(hostname__contains= search_text )	
 			print "General info"	
 			#for i in ip_list.values('hostname','ip','os','port','idc'):
 			for i in ip_list:
-				inGroups = db_connector.IP.objects.get(hostname= i.hostname).group.values('name')	
+				inGroups = IP.objects.get(hostname= i.hostname).group.values('name')	
 				print "\033[32;1mHostname: \033[0m", i.hostname 
 				print "\033[32;1mIP: \033[0m", i.ip
 				print "\033[32;1mOS: \033[0m", i.os

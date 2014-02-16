@@ -5,4 +5,4 @@ import sys,os,time
 sys.path.append('/usr/local/TriAquae')
 os.environ['DJANGO_SETTINGS_MODULE'] ='TriAquae.settings'
 #----------------Use Django Mysql model----------------
-from TriAquae.hosts.models import * 
+#from TriAquae.hosts.models import * 

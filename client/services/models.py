@@ -15,7 +15,13 @@ class apache(MonitorModel):
 	check_interval = 60
 
 class loadMonitor(MonitorModel):
-	script = 'load.py'
+	from scripts import cpu
+	script = cpu
 class cpuMonitor(MonitorModel):
 	from scripts import cpu
         script = cpu
+
+
+#a = cpuMonitor()
+
+#print a.script.monitor()

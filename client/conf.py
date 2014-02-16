@@ -13,4 +13,4 @@ enabled_services = {
 
 }
 
-print cpuMonitor().script
+#print cpuMonitor().script.monitor()

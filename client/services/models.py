@@ -16,6 +16,7 @@ class apache(MonitorModel):
 
 class loadMonitor(MonitorModel):
 	from scripts import cpu
+	check_interval = 30
 	script = cpu
 class cpuMonitor(MonitorModel):
 	from scripts import cpu

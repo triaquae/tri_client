@@ -1,15 +1,22 @@
 # Monitoring  client program
-import socket,time
+import socket,time,json
 import commands
-HOST = '192.168.2.240'    # The remote host
-PORT = 9999              # The same port as used by the server
+HOST = '192.168.2.248'    # The remote host
+PORT = 9998              # The same port as used by the server
+status_file = 'state/monitor_status.json'
+#--------------
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect((HOST, PORT))
-cmd_status, cmd_result = commands.getstatusoutput('grep -E "MemTotal|MemFree|Cached|SwapTotal|SwapFree"  /proc/meminfo')
-print cmd_result
-s.sendall(cmd_result)
-data = s.recv(1024)
+s.sendall('getMonitorStatusData')
+#data = s.recv(1024)
 s.close()
-print 'Received', repr(data)
+
+time.sleep(2)
+with open(status_file) as f:
+
+	monitor_dic = json.load(f)
+	for k,v in monitor_dic.items():
+		print k,v
+
 print "will connecto to server 30 secs later.."

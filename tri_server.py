@@ -1,23 +1,31 @@
 import SocketServer,time
-import pickle
+import pickle,json
 import monitor_list
 import os,commands,stat
 from hashlib import md5
 import db_connector
+from TriAquae.hosts.models import IP
 recv_dir = 'recv/'
 
-server_address = '127.0.0.1'
+server_address = '192.168.2.248'
 block_list = []
-'''
-status_file = 'state/monitor_status.pkl'
+status_file = 'state/monitor_status.json'
+
 if os.path.exists(status_file):
 	with open(status_file) as f:
-		monitor_dic = pickle.load(f)
+		monitor_dic = json.load(f)
+		#make sure all the hosts are in the monitor list
+		for h in IP.objects.filter(status_monitor_on=True):
+			if h.hostname not in monitor_dic.keys():
+				monitor_dic[h.hostname] = {}
 else:
 	monitor_dic = {}
-	for ip in monitor_list.m_list:
-		monitor_dic[ip] = 'unkown','unkown'
-'''
+	for h in IP.objects.filter(status_monitor_on=True):
+		 monitor_dic[h.hostname] = {}
+
+
+print monitor_dic 
+
 class MyTCPHandler(SocketServer.BaseRequestHandler):
     def handle(self):
         def md5_file(filename):
@@ -58,7 +66,7 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
 			cmd_status,result = commands.getstatusoutput(cmd)	
 			print 'host:%s \tcmd:%s \tresult:%s' %(self.client_address[0], cmd, cmd_status)	
 			self.request.sendall(pickle.dumps( (cmd_status,result) ))
-		if self.data.startswith('RUN_Script|'):
+		elif self.data.startswith('RUN_Script|'):
 			recv_data= self.data
 			filename = "%s%s" %(recv_dir,recv_data.split('|')[1].strip())
 			print '+++++|receiving file from server:',filename
@@ -81,13 +89,21 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
 			else:
 				print "file not complete"
 				self.request.send('FileTransferNotComplete')	
-		if self.client_address[0] == "127.0.0.1":
+		elif self.data == "getMonitorStatusData":
 			print "going to serialize Monitor_dic"
-		if self.data == 'getHardwareInfo':
+			with open(status_file, 'wb') as f:
+				json.dump(monitor_dic, f)
+		elif self.data == 'getHardwareInfo':
 			import Hardware_Collect_Script
 			hardware_data = Hardware_Collect_Script.collectAsset() 
 			self.request.sendall(hardware_data )
-	
+		elif self.data == 'ReportMonitorStatus':
+			self.request.send('ReadyToReceiveStatusData')	
+			status_data = json.loads(self.request.recv(8096) )	
+			client_hostname =  status_data['hostname']
+			for name,service_status in status_data.items():
+				monitor_dic[ client_hostname][name] =  service_status
+			print monitor_dic[client_hostname]
 if __name__ == "__main__":
     HOST, PORT = "0.0.0.0", 9998
 

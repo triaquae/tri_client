@@ -1,7 +1,7 @@
 import triaquae_env
-
+from scripts import load,cpu,memory
 class MonitorModel:
-	check_interval = 10
+	check_interval = 30
 	alert_enabled = True
 	alert_method = 'email'
 	contact = 'lijie3721@126.com'	
@@ -10,16 +10,15 @@ class MonitorModel:
 
 
 class apache(MonitorModel):
-	from scripts import cpu
 	script = cpu
 	check_interval = 60
 
+class memoryMonitor(MonitorModel):
+	script = memory	
 class loadMonitor(MonitorModel):
-	from scripts import cpu
-	check_interval = 30
-	script = cpu
+	check_interval = 120 
+	script = load
 class cpuMonitor(MonitorModel):
-	from scripts import cpu
         script = cpu
 
 

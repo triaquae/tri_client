@@ -8,7 +8,7 @@ enabled_services = {
 		('httpd', apache()),
 		('load', loadMonitor()),
 		('cpu', cpuMonitor()),
-		#('SSH', ssh()),
+		('memory', memoryMonitor()),
 		),
 
 }

@@ -3,9 +3,9 @@ import conf,json,threading
 import socket,time,sys
 import scripts
 import commands
-HOST = '192.168.2.252'    # The remote host
-PORT = 9999              # The same port as used by the server
-
+HOST = '192.168.2.248'    # The remote host
+PORT = 9998              # The same port as used by the server
+hostname = 'localhost'
 status_dic = {'services': {}}
 last_check_dic = {}
 interval_dic = {}
@@ -25,7 +25,6 @@ for k,v in conf.enabled_services.items():
 									   'last_check': 0 }
 			
 
-print interval_dic
 
 def multi_job(m_list, m_interval):
 	status_dic = {}
@@ -34,7 +33,7 @@ def multi_job(m_list, m_interval):
 		print 'going to run ...',name
 		status_dic[name] = m_api.script.monitor()
 		interval_dic[m_interval]['last_check'] = time.time()
-		print interval_dic[m_interval]
+		return interval_dic[m_interval]
 	result = [] 
 	for name, t in m_list.items():
 		result.append(threading.Thread(target=run, args=(name,t)).start())
@@ -49,16 +48,20 @@ def multi_job(m_list, m_interval):
 
 
 def monitor_api(m_dic, m_interval):
-	#s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	#s.connect((HOST, PORT))
 	status_dic = multi_job(m_dic['name'], m_interval)
-	print '\033[34;1m %s \033[0m' % status_dic
-	#s.sendall(json.dumps(status_dic))
-	#data = s.recv(1024)
-	#s.close()
-	#print 'Received', repr(data)
-	#print "will connecto to server 30 secs later.."
+	status_dic['hostname'] = hostname
+	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	s.connect((HOST, PORT))
+	print '\033[34;1m sending status to Monitor server .... \033[0m' 
+	s.send('ReportMonitorStatus')
+	transferSignal = s.recv(1024)
+	if transferSignal == 'ReadyToReceiveStatusData':
+		s.sendall(json.dumps(status_dic))
+	s.close()
+	print "wait for the next round..."
+	
 
+# Trigger the monitor api
 while True:
 	for interval,monitor_dic in interval_dic.items():
 		time_diff = time.time() - monitor_dic['last_check']  
@@ -67,6 +70,6 @@ while True:
 			monitor_api(monitor_dic, interval)
 			#monitor_dic['last_check'] = time.time()
 		else:
-			print 'not hit the inteval time yet.' ,time_diff,monitor_dic
+			print '%s hit the next inteval in %s seconds.' % (monitor_dic['name'].keys(), interval - time_diff )
 	#monitor_api()
 	time.sleep(5)

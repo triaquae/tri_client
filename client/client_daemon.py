@@ -2,7 +2,8 @@ import SocketServer,time
 import pickle
 import monitor_list
 import compress
-import os,commands,stat
+import key_gen
+import os,commands,stat,random
 from hashlib import md5
 recv_dir = 'recv/'
 
@@ -40,7 +41,19 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
 		#print '\033[34;1m=====\033[0m',return_data
                 return return_data
         # self.request is the TCP socket connected to the client
-	if self.client_address[0] != server_address:
+	print "Got a connection from",self.client_address[0]
+	RSA_signal =self.request.recv(1024).strip()
+	random_num,dcrypted_data_from_server = str(random.random()),None
+	#print random_num, dcrypted_data_from_server
+	if RSA_signal == 'RSA_KEY_Virification':
+		encrypted_data = key_gen.RSA_key.encrypt_RSA(key_gen.public_file,random_num)
+		self.request.send(encrypted_data)
+		dcrypted_data_from_server = self.request.recv(1024)	
+	if random_num != dcrypted_data_from_server:
+		print random_num, dcrypted_data_from_server
+		self.finish()
+	
+		"""if self.client_address[0] != server_address:
 		err_msg= "\033[31;1mIP %s not allowed to connect this server!\033[0m" % self.client_address[0]
 		pickle_data = '', err_msg
 		self.request.sendall( pickle.dumps(pickle_data)  )
@@ -48,12 +61,12 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
 		block_list.append(self.client_address[0])
 		if block_list.count(self.client_address[0]) > 5:
 			print "Alert::malicious attack from:" , self.client_address[0]
+		"""
 	else:
+		print "RSA virification passed!"
 		self.data = self.request.recv(1024).strip()
-		print "{} wrote:",self.client_address[0]
 		if self.data.startswith('CMD_Excution|'):
 			cmd= self.data.split('CMD_Excution|')[1]
-			print cmd,'=====|||||'
 			cmd_status,result = commands.getstatusoutput(cmd)	
 			print 'host:%s \tcmd:%s \tresult:%s' %(self.client_address[0], cmd, cmd_status)	
 			self.request.sendall(pickle.dumps( (cmd_status,result) ))
@@ -122,8 +135,6 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
                         else:
                                 print "file not complete"
                                 self.request.send('FileTransferNotComplete')
-		if self.client_address[0] == "127.0.0.1":
-			print "going to serialize Monitor_dic"
 		if self.data == 'getHardwareInfo':
 			import Hardware_Collect_Script
 			hardware_data = Hardware_Collect_Script.collectAsset() 

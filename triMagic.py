@@ -6,7 +6,7 @@ import commands,sys,pickle,json
 from django.core.exceptions import ObjectDoesNotExist
 import db_connector, file_transfer
 from TriAquae.hosts.models import * 
-import compress
+import compress,key_gen
 
 unsupported_cmds = ['vi']
 
@@ -76,6 +76,18 @@ def jobRunner(action,host,job,data=None):
                         if not data:break
                         return_data += data
                 return return_data
+	def RSA_verify(sock):
+		sock.send('RSA_KEY_Virification')
+		encrypted_data = sock.recv(1024)
+		try:
+			decrpted_data = key_gen.RSA_key.decrypt_RSA(key_gen.private_file,encrypted_data)
+			#print '\033[32;40;1m---------\033[0m', decrpted_data
+			#sock.send('s %s'% decrpted_data)
+			sock.send(decrpted_data)
+		except ValueError:
+			print "\033[31;1mError: RSA verification failed! Checked your RSA KEY setting in both side!\033[0m"
+			sys.exit()
+	RSA_verify(s)
         if action == 'CMD_Excution':
                 for cmd in unsupported_cmds:
                         if job.strip().startswith(cmd):

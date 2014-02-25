@@ -1,9 +1,9 @@
 # Monitoring  client program
 import conf,json,threading
 import socket,time,sys
-import scripts
+import scripts,key_gen,random
 import commands
-HOST = '192.168.2.212'    # The remote host
+HOST = '192.168.91.201'    # The remote host
 PORT = 9998              # The same port as used by the server
 hostname = 'localhost'
 status_dic = {'services': {}}
@@ -52,6 +52,9 @@ def monitor_api(m_dic, m_interval):
 	status_dic['hostname'] = hostname
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	s.connect((HOST, PORT))
+	RSA_signal,random_num = 'RSA_KEY_Virification', str(random.random())
+	encrypted_data = key_gen.RSA_key.encrypt_RSA(key_gen.public_file,random_num)
+	s.sendall(json.dumps( (RSA_signal,encrypted_data, random_num) )) 
 	print '\033[34;1m sending status to Monitor server .... \033[0m' 
 	s.send('ReportMonitorStatus')
 	transferSignal = s.recv(1024)

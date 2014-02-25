@@ -84,6 +84,8 @@ def jobRunner(action,host,job,data=None):
 			#print '\033[32;40;1m---------\033[0m', decrpted_data
 			#sock.send('s %s'% decrpted_data)
 			sock.send(decrpted_data)
+			RSA_final_confirmation = sock.recv(1024)
+			if RSA_final_confirmation != 'CorrectRSAkey':raise ValueError
 		except ValueError:
 			print "\033[31;1mError: RSA verification failed! Checked your RSA KEY setting in both side!\033[0m"
 			sys.exit()

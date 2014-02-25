@@ -47,10 +47,12 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
 	#print random_num, dcrypted_data_from_server
 	if RSA_signal == 'RSA_KEY_Virification':
 		encrypted_data = key_gen.RSA_key.encrypt_RSA(key_gen.public_file,random_num)
+		print encrypted_data
 		self.request.send(encrypted_data)
 		dcrypted_data_from_server = self.request.recv(1024)	
 	if random_num != dcrypted_data_from_server:
 		print random_num, dcrypted_data_from_server
+		self.request.send('WrongRSAkey')
 		self.finish()
 	
 		"""if self.client_address[0] != server_address:
@@ -63,6 +65,7 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
 			print "Alert::malicious attack from:" , self.client_address[0]
 		"""
 	else:
+		self.request.send('CorrectRSAkey')
 		print "RSA virification passed!"
 		self.data = self.request.recv(1024).strip()
 		if self.data.startswith('CMD_Excution|'):

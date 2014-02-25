@@ -2,16 +2,18 @@ import RSA_key,sys,os
 
 
 private_file, public_file = 'conf/.rsa_private.id', 'conf/.rsa_public.id'
+if not os.path.isfile(private_file):
+	print "\033[31;1mError:RSA private key file %s is not exsit.\033[0m" % private_file
+	sys.exit()
 
 def new_key(private_filename, public_filename):
         private, public = RSA_key.generate_RSA()
-        with open(private_filename,'wb') as f:
-                f.write(private)
+	with open(private_filename,'wb') as f:
+		f.write(private)
 
-        with open(public_filename,'wb') as f:
-                f.write(public)
+	with open(public_filename,'wb') as f:
+		f.write(public)
 	return 'New key generated!'
-
 if __name__ == '__main__':
   try:
 	if sys.argv[1].strip() == '-y':

@@ -3,7 +3,7 @@ import pickle,json
 import monitor_list
 import os,commands,stat
 from hashlib import md5
-import db_connector
+import db_connector,key_gen
 from TriAquae.hosts.models import IP
 recv_dir = 'recv/'
 
@@ -48,9 +48,25 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
 		#print '\033[34;1m=====\033[0m',return_data
                 return return_data
         # self.request is the TCP socket connected to the client
-	
-	if self.client_address[0] != server_address:
-		err_msg= "\033[31;1mIP %s not allowed to connect this server!\033[0m" % self.client_address[0]
+	def RSA_verifyication(sock):
+		RSA_signal, encrypted_data,random_num_from_client = json.loads(sock.recv(1024))
+		if RSA_signal == 'RSA_KEY_Virification':
+			encrypted_data = "iwTgqSzMcNOHauWdXXc+rgfbWt6IUXmdIXUqNUJ2U7FZKISc2WR2yAJrq7ldR3TxQEppWgIo/Ycj\nA5gl0fGDVvAEvV02CKZ3gZEI6fWpiMoy6ucpFFDyVAWUrpiXdUOVKxOsDXGgeOObgvd1jsEQCo4i\ncLCBTWDn0HfyQic+Btm1txXc7Nw9jknUCZx6Y8I+6JaIYjNRLwJ6kSMwpTsfP37lvrQfdUkWu3bX\npV9z3hHOQ6+A8rlK7fmL1zk75TXDCmnrLY88UIv6BL4zPXtim4BCD7PlOvDG296br0VIcvF5uhqr\ntj7zOcbA81P1JBFm1nMJqLv+SB5sit923v05XA==\n"
+			
+			try:
+				decrpted_data = key_gen.RSA_key.decrypt_RSA(key_gen.private_file,encrypted_data)
+				#print decrpted_data,'+++++++', random_num_from_client
+			except ValueError:
+				decrpted_data = 'Incorrect decryption'
+			if decrpted_data != random_num_from_client:
+				return 0
+		else:
+			return 0
+		#print RSA_singal, encrypted_data 	
+	if RSA_verifyication(self.request) == 0: #didn't pass the RSA virification
+
+		#if self.client_address[0] != server_address:
+		err_msg= "\033[31;1mIP %s didn't pass the RSA virification,drop it!\033[0m" % self.client_address[0]
 		pickle_data = '', err_msg
 		self.request.sendall( pickle.dumps(pickle_data)  )
 		print err_msg 

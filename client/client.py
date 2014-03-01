@@ -3,7 +3,7 @@ import conf,json,threading
 import socket,time,sys
 import scripts,key_gen,random
 import commands
-HOST = '192.168.91.201'    # The remote host
+HOST = '192.168.2.211'    # The remote host
 PORT = 9998              # The same port as used by the server
 hostname = 'localhost'
 status_dic = {'services': {}}

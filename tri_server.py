@@ -51,7 +51,7 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
 	def RSA_verifyication(sock):
 		RSA_signal, encrypted_data,random_num_from_client = json.loads(sock.recv(1024))
 		if RSA_signal == 'RSA_KEY_Virification':
-			encrypted_data = "iwTgqSzMcNOHauWdXXc+rgfbWt6IUXmdIXUqNUJ2U7FZKISc2WR2yAJrq7ldR3TxQEppWgIo/Ycj\nA5gl0fGDVvAEvV02CKZ3gZEI6fWpiMoy6ucpFFDyVAWUrpiXdUOVKxOsDXGgeOObgvd1jsEQCo4i\ncLCBTWDn0HfyQic+Btm1txXc7Nw9jknUCZx6Y8I+6JaIYjNRLwJ6kSMwpTsfP37lvrQfdUkWu3bX\npV9z3hHOQ6+A8rlK7fmL1zk75TXDCmnrLY88UIv6BL4zPXtim4BCD7PlOvDG296br0VIcvF5uhqr\ntj7zOcbA81P1JBFm1nMJqLv+SB5sit923v05XA==\n"
+			#encrypted_data = "iwTgqSzMcNOHauWdXXc+rgfbWt6IUXmdIXUqNUJ2U7FZKISc2WR2yAJrq7ldR3TxQEppWgIo/Ycj\nA5gl0fGDVvAEvV02CKZ3gZEI6fWpiMoy6ucpFFDyVAWUrpiXdUOVKxOsDXGgeOObgvd1jsEQCo4i\ncLCBTWDn0HfyQic+Btm1txXc7Nw9jknUCZx6Y8I+6JaIYjNRLwJ6kSMwpTsfP37lvrQfdUkWu3bX\npV9z3hHOQ6+A8rlK7fmL1zk75TXDCmnrLY88UIv6BL4zPXtim4BCD7PlOvDG296br0VIcvF5uhqr\ntj7zOcbA81P1JBFm1nMJqLv+SB5sit923v05XA==\n"
 			
 			try:
 				decrpted_data = key_gen.RSA_key.decrypt_RSA(key_gen.private_file,encrypted_data)
@@ -120,6 +120,15 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
 			for name,service_status in status_data.items():
 				monitor_dic[ client_hostname][name] =  service_status
 			print monitor_dic[client_hostname]
+			# push status data into JSON file
+			if client_hostname == 'localhost':
+				with open(status_file, 'wb') as f:
+					json.dump(monitor_dic, f)
+
+				print 'status inserted into JSON file'
+				
+		elif self.data == 'CollectStatusIntoJsonFile':
+			print 'CollectStatusIntoJsonFile'
 if __name__ == "__main__":
     HOST, PORT = "0.0.0.0", 9998
 

@@ -28,8 +28,10 @@ for p in  policy.enabled_policy:
 	for h in  host_list:
 		if monitor_dic.has_key(h.hostname):
 			if len(monitor_dic[h.hostname]) == 0: 
-				print "no data from client, is it done?"
+				print "\033[31;1mno data from client, is it done?\033[0m",h.hostname
 			else:
-				print monitor_dic[h.hostname]
+				print "\033[32;1m%s\033[0m" % h.hostname
+				for k,v in  monitor_dic[h.hostname].items():
+					print k,v,'+++'
 		else:
-			print "not going to monitor server:", h.hostname
+			print "\033[34;1mnot going to monitor server:\033[0m", h.hostname

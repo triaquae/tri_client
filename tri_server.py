@@ -7,7 +7,7 @@ import db_connector,key_gen
 from TriAquae.hosts.models import IP
 recv_dir = 'recv/'
 
-server_address = '192.168.2.248'
+#server_address = '192.168.2.248'
 block_list = []
 status_file = 'state/monitor_status.json'
 
@@ -118,8 +118,10 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
 			status_data = json.loads(self.request.recv(8096) )	
 			client_hostname =  status_data['hostname']
 			for name,service_status in status_data.items():
+				print name,service_status
+				if type(service_status) is dict:service_status['last_check'] = time.time()
 				monitor_dic[ client_hostname][name] =  service_status
-			print monitor_dic[client_hostname]
+			print "************\n",monitor_dic[client_hostname]
 			# push status data into JSON file
 			if client_hostname == 'localhost':
 				with open(status_file, 'wb') as f:

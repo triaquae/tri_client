@@ -32,4 +32,4 @@ enabled_policy =(
 	Policy()	
 )
 
-print enabled_policy[1].name
+#print enabled_policy[1].name

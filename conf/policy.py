@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+import service
 
 class Policy:
 	name = None
@@ -24,7 +24,11 @@ class defaultPolicy(Policy):
 	name = 'TriaquaeDefaultPolicy'
 	groups = ['BJ', 'TestGroup']
 	hosts = ['localhost']
-	services = ['cpu','load','disk', 'memory',]
+	services = {
+		'cpu': service.cpu(),
+		'memory':  service.memory()
+	}
+	#services = ['cpu','load','disk', 'memory',]
 
 
 enabled_policy =( 
@@ -32,4 +36,4 @@ enabled_policy =(
 	Policy()	
 )
 
-#print enabled_policy[1].name
+#print enabled_policy[0].services[0].index_dic

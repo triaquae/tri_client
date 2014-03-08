@@ -3,7 +3,7 @@ import json,os,sys
 from conf import policy
 import db_connector
 from TriAquae.hosts.models import Group,IP
-
+import time
 status_file = 'state/monitor_status.json'
 
 with open(status_file) as f:
@@ -32,6 +32,17 @@ for p in  policy.enabled_policy:
 			else:
 				print "\033[32;1m%s\033[0m" % h.hostname
 				for k,v in  monitor_dic[h.hostname].items():
-					print k,v,'+++'
+					if p.services.has_key(k): 
+						print '----->will monitor ', k
+						print p.services[k].index_dic
+					if type(v) is dict:
+						print '\033[33;1m %s \033[0m' % k
+						for name,status in v.items():
+						  if name == 'last_check':
+						    status = time.time() - status
+						    print '\t\033[33;1m%s  %s sec ago\033[0m' %(name,status)
+						  else:
+						    print '\t',name,status	
+					else:print k,v
 		else:
 			print "\033[34;1mnot going to monitor server:\033[0m", h.hostname

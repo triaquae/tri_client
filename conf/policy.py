@@ -30,10 +30,20 @@ class defaultPolicy(Policy):
 	}
 	#services = ['cpu','load','disk', 'memory',]
 
+class TestPolicy(Policy):
+        name = 'testPl'
+        #groups = ['BJ']
+        hosts = ['localhost']
+        services = {
+                'load': service.load(),
+		'cpu': service.cpu(),
+        }
+
 
 enabled_policy =( 
 	defaultPolicy(),
-	Policy()	
+	Policy(),
+	TestPolicy(),
 )
 
 #print enabled_policy[0].services[0].index_dic

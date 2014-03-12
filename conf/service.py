@@ -20,11 +20,21 @@ class cpu(DefaultService):
 	}
 	graph_index = ['iowait', 'system', 'idle', 'user']
 
+class load(DefaultService):
+        name = 'load'
+        interval = 230
+        index_dic = {
+                'uptime': [None, 80,90],
+                'load1': [int, 3,9],
+                'load5': [int, 3,9],
+                'load15': [int, 3,9],
+        }
+        graph_index = ['load1', 'load5', 'load15']
 
 class memory(DefaultService):
 	name = 'memory'
 	index_dic = {
-		'MemTotal': ['number', 1024, 512],
+		'MemTotal': [int, 1024, 512],
 		'MemFree' : ['percentage', 80, 90],
 		'Buffers' : ['percentage', 80, 90],
 		'Cached' : ['percentage', 80, 90],

@@ -26,7 +26,8 @@ class defaultPolicy(Policy):
 	hosts = ['localhost']
 	services = {
 		'cpu': service.cpu(),
-		'memory':  service.memory()
+		'memory':  service.memory(),
+		'load':  service.load()
 	}
 	#services = ['cpu','load','disk', 'memory',]
 
@@ -36,12 +37,13 @@ class TestPolicy(Policy):
         hosts = ['localhost']
         services = {
                 'load': service.load(),
+		'memory':  service.memory(),
 		'cpu': service.cpu(),
         }
 
 
 enabled_policy =( 
-	defaultPolicy(),
+	#defaultPolicy(),
 	Policy(),
 	TestPolicy(),
 )

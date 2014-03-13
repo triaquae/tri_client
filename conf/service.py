@@ -34,12 +34,12 @@ class load(DefaultService):
 class memory(DefaultService):
 	name = 'memory'
 	index_dic = {
-		'MemTotal': [int, 1024, 512],
+		'MemTotal': [None],
 		'MemFree' : ['percentage', 80, 90],
-		'Buffers' : ['percentage', 80, 90],
-		'Cached' : ['percentage', 80, 90],
-		'SwapTotal': ['percentage', 80, 90],
-		'SwapFree': ['percentage', 80, 90],
+		'Buffers' : [None, 80, 90],
+		'Cached' : [None, 80, 90],
+		'SwapTotal': [None, 80, 90],
+		'SwapFree': [None, 80, 90],
 	}
 	graph_index = ['MemTotal', 'MemFree', 'Cached', 'SwapFree']
 

@@ -3,6 +3,10 @@ import commands
 
 
 def monitor():
+	monitor_dic = {
+		'SwapUsage': 'percentage',
+		 'MemUsage'  : 'percentage',
+	}
 	shell_command ="grep 'MemTotal\|MemFree\|Buffers\|^Cached\|SwapTotal\|SwapFree' /proc/meminfo"
 	
 	status,result = commands.getstatusoutput(shell_command)
@@ -14,6 +18,17 @@ def monitor():
 			key= i.split()[0].strip(':') # factor name
 			value = i.split()[1]   # factor value
 			value_dic[ key] =  value
+
+		if monitor_dic['SwapUsage'] == 'percentage':
+			value_dic['SwapUsage_p'] = 100 - int(value_dic['SwapFree']) * 100 / int(value_dic['SwapTotal'])	
+		#real SwapUsage value
+		value_dic['SwapUsage'] = int(value_dic['SwapTotal']) - int(value_dic['SwapFree'])
+
+		MemUsage = int(value_dic['MemTotal']) - (int(value_dic['MemFree']) + int(value_dic['Buffers'])  + int(value_dic['Cached']))
+		if monitor_dic['MemUsage'] == 'percentage':
+			value_dic['MemUsage_p'] = int(MemUsage) * 100 / int(value_dic['MemTotal'])
+		#real MemUsage value	
+		value_dic['MemUsage'] = MemUsage 
 	return value_dic
 
 if __name__ == '__main__':

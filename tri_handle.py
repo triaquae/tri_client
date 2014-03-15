@@ -50,9 +50,11 @@ for h,p_index_list in  host_dic.items():  #p_index stands for policy_index in en
 			for k,v in  monitor_dic[h.hostname].items(): #k stands for the monitor indicator name
 				if p.services.has_key(k):  #services will be monitored 
 					print '----->\033[43;1mwill only monitor \033[0m', k
-					for n,m_index in p.services[k].index_dic.items():
-						print n,m_index, 'client data:',v[n]
-						alert_handle.handle(k, m_index)
+					#print p.services[k]
+					alert_handle.handle(k, p.services[k], v)	
+					#for n,m_index in p.services[k].index_dic.items():
+					#	print n,m_index, 'client data:',v[n]
+					#	alert_handle.handle(n, m_index)
 				"""if type(v) is dict:
 					print '\033[42;1m %s \033[0m' % k
 					for name,status in v.items():

@@ -22,12 +22,13 @@ class Policy:
 
 class defaultPolicy(Policy):
 	name = 'TriaquaeDefaultPolicy'
-	groups = ['BJ', 'TestGroup']
+	groups = ['TestGroup']
 	hosts = ['localhost']
 	services = {
 		'cpu': service.cpu(),
 		'memory':  service.memory(),
-		'load':  service.load()
+		'load':  service.load(),
+		'upCheck': service.upCheck(),
 	}
 	#services = ['cpu','load','disk', 'memory',]
 
@@ -43,9 +44,9 @@ class TestPolicy(Policy):
 
 
 enabled_policy =( 
-	#defaultPolicy(),
-	Policy(),
-	TestPolicy(),
+	defaultPolicy(),
+	#Policy(),
+	#TestPolicy(),
 )
 
 #print enabled_policy[0].services[0].index_dic

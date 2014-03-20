@@ -9,7 +9,7 @@ status_file = 'state/monitor_status.json'
 
 with open(status_file) as f:
 	monitor_dic = json.load(f)
-
+	
 
 #for host, status in monitor_dic.items():
 #	print host,status
@@ -38,18 +38,20 @@ for n,p in  enumerate(policy.enabled_policy):
 
 print host_dic
 
+
+
 #host_list =   set(host_list)
 for h,p_index_list in  host_dic.items():  #p_index stands for policy_index in enabled_policy list 
   for p_index in p_index_list:
-    	p = policy.enabled_policy[p_index]
-	if monitor_dic.has_key(h.hostname):
+    	p = policy.enabled_policy[p_index] #find this host belongs to which policy
+	if monitor_dic.has_key(h.hostname): #host needs to be monitored
 		if len(monitor_dic[h.hostname]) == 0: 
 			print "\033[31;1mno data from client, is it done?\033[0m",h.hostname
-		else:
+		else: 
 			print "\033[46;1m%s\033[0m" % h.hostname
 			for k,v in  monitor_dic[h.hostname].items(): #k stands for the monitor indicator name
 				if p.services.has_key(k):  #services will be monitored 
-					print '----->\033[43;1mwill only monitor \033[0m', k
+					print '------------------------------------------>\033[46;1mwill only monitor \033[0m', k
 					#print p.services[k]
 					alert_handle.handle(k, p.services[k], v)	
 					#for n,m_index in p.services[k].index_dic.items():
@@ -64,5 +66,5 @@ for h,p_index_list in  host_dic.items():  #p_index stands for policy_index in en
 					  else:
 					    print '\t',name,status	
 				else:print k,v """
-	else:
+	else: #host not in database or not enalbed for monitoring
 		print "\033[34;1mnot going to monitor server:\033[0m", h.hostname

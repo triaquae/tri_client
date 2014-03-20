@@ -9,6 +9,7 @@ enabled_services = {
 		('load', loadMonitor()),
 		('cpu', cpuMonitor()),
 		('memory', memoryMonitor()),
+		('upCheck', upCheck()),
 		),
 
 }

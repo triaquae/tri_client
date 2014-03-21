@@ -1,6 +1,10 @@
 import time
+import json
 
-def handle(name, alert_index, status_data):
+
+def handle(name, alert_index, status_data, redis_obj):
+	host_status_dic = {}
+	print redis_obj
 	#print '---------------->monitor name',name,alert_index.interval, status_data['last_check']
 	time_diff = time.time() - status_data['last_check'] 
 	if time_diff < alert_index.interval:  # service works fine
@@ -8,6 +12,7 @@ def handle(name, alert_index, status_data):
 		for n,index  in alert_index.index_dic.items(): #n stands for indicator name
 		  if index[0] is not None:
 			if n not in alert_index.lt_operator : #use > gt mode  
+			  print status_data[n]
 			  if index[0] != 'string':
 				if float(status_data[n]) > index[2]: #cross critical limit
 				

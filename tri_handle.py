@@ -5,6 +5,7 @@ import db_connector
 from TriAquae.hosts.models import Group,IP
 import monitor_data_handle as alert_handle
 import time
+import redis_connector 
 status_file = 'state/monitor_status.json'
 
 with open(status_file) as f:
@@ -49,22 +50,14 @@ for h,p_index_list in  host_dic.items():  #p_index stands for policy_index in en
 			print "\033[31;1mno data from client, is it done?\033[0m",h.hostname
 		else: 
 			print "\033[46;1m%s\033[0m" % h.hostname
-			for k,v in  monitor_dic[h.hostname].items(): #k stands for the monitor indicator name
-				if p.services.has_key(k):  #services will be monitored 
+			#for k,v in  monitor_dic[h.hostname].items(): #k stands for the monitor indicator name
+			for service,alert_index in p.services.items():
+				alert_handle.handle(service,alert_index,  monitor_dic[h.hostname][service],  redis_connector.r)	
+				#print  service,  monitor_dic[h.hostname][service]
+				"""if p.services.has_key(k):  #services will be monitored 
 					print '------------------------------------------>\033[46;1mwill only monitor \033[0m', k
 					#print p.services[k]
 					alert_handle.handle(k, p.services[k], v)	
-					#for n,m_index in p.services[k].index_dic.items():
-					#	print n,m_index, 'client data:',v[n]
-					#	alert_handle.handle(n, m_index)
-				"""if type(v) is dict:
-					print '\033[42;1m %s \033[0m' % k
-					for name,status in v.items():
-					  if name == 'last_check':
-					    status = time.time() - status
-					    print '\t\033[42;1m%s  %s sec ago\033[0m' %(name,status)
-					  else:
-					    print '\t',name,status	
-				else:print k,v """
+				"""
 	else: #host not in database or not enalbed for monitoring
 		print "\033[34;1mnot going to monitor server:\033[0m", h.hostname

@@ -46,5 +46,6 @@ def handle(name, alert_index, status_data, redis_obj):
                                         print '\033[43;1mWarining String unequal....\033[0m',status_data[n], index[1]
 		  else: #None ,will not alert
 			print '\033[47;1mWill not Alert...\033[0m', n, status_data[n] 
+		  print n, index,'----------->',status_data[n]
 	else: #service down
 		print "\033[31;1mToo long since last time receive the message from client by Sec\033[0m" ,name,  time_diff 

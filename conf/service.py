@@ -4,7 +4,10 @@ class DefaultService:
 	name = 'DefaultService'
 	interval = 300
 	index_dic = None
-	graph_index = None
+	graph_index = {
+		'index' : None,
+		'title' : name, 
+	} 
 	lt_operator = [] #if this sets to empty,all the status will be caculated in > mode , gt = > 
 
 class upCheck(DefaultService):
@@ -13,6 +16,12 @@ class upCheck(DefaultService):
 	index_dic = {
 		'host_status' : [None],
 	}
+class ngnix(DefaultService):
+	name = "Ngnix status"
+	interval = 30
+	index_dic ={
+		'alive': [int , 1]
+	} 
 class cpu(DefaultService):
 	name = 'cpu'
 	interval = 30 
@@ -25,13 +34,8 @@ class cpu(DefaultService):
 		'nice': [None, 80,90],
 	}
 	graph_index ={
-		'cpu usage' : {
-			'iowait': ['iowait'], 
-			'system': ['system'],
-			'idle'  :['idle'], 
-			'user' :['user'],
-			},
-
+		'index' :['iowait','system','idle','user'], 
+		'title' :'CPU usage',
 		}
 	lt_operator = ['idle']
 class load(DefaultService):
@@ -44,8 +48,10 @@ class load(DefaultService):
                 'load5': [int, 3,9],
                 'load15': [int, 3,9],
         }
-        graph_index = ['load1', 'load5', 'load15']
-
+        graph_index = {
+		'index':['load1', 'load5', 'load15'],
+		 'title': 'Load status' ,
+	}
 class memory(DefaultService):
 	name = 'memory'
 	index_dic = {
@@ -53,6 +59,8 @@ class memory(DefaultService):
 		'MemUsage_p': ['percentage', 10, 65],
 		'MemUsage': [None, 60, 65],
 	}
-	graph_index = ['MemUsage','SwapUsage']
-
+	graph_index = {
+		'index': ['MemUsage','SwapUsage'],
+		
+	}
 

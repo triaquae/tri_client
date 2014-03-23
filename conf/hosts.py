@@ -6,10 +6,7 @@ import service
 class localhost:
 	#hostname = 'localhost'
 	services = {
-		'cpu': service.cpu(),
-		'memory':  service.memory(),
-		'load':  service.load(),
-		'upCheck': service.upCheck(),
+		'ngnix': service.ngnix(),
 	}
 	alert_policy = None
 

@@ -22,7 +22,7 @@ class Policy:
 
 class defaultPolicy(Policy):
 	name = 'TriaquaeDefaultPolicy'
-	groups = ['TestGroup']
+	groups = ['TestGroup',]
 	hosts = ['localhost','www.baidu.com']
 	services = {
 		'cpu': service.cpu(),

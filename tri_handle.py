@@ -6,16 +6,14 @@ from TriAquae.hosts.models import Group,IP
 import monitor_data_handle as alert_handle
 import time
 import redis_connector 
-status_file = 'state/monitor_status.json'
 
-with open(status_file) as f:
-	monitor_dic = json.load(f)
+#pull out status data from Redis
+monitor_dic = redis_connector.r.get('TriAquae_monitor_status')
+if monitor_dic is not None:
+	monitor_dic = json.loads(monitor_dic)
+else:
+	sys.exit("No monitor data found in Redis,please check")
 	
-
-#for host, status in monitor_dic.items():
-#	print host,status
-
-
 #pull out all the hosts in enabled_policy
 host_dic = {}
 for n,p in  enumerate(policy.enabled_policy):
@@ -38,7 +36,7 @@ for n,p in  enumerate(policy.enabled_policy):
 					host_dic[host].append(n)
 
 print host_dic
-
+print "\033[42;1m-----\033[0m"
 
 
 #host_list =   set(host_list)
@@ -50,14 +48,9 @@ for h,p_index_list in  host_dic.items():  #p_index stands for policy_index in en
 			print "\033[31;1mno data from client, is it done?\033[0m",h.hostname
 		else: 
 			print "\033[46;1m%s\033[0m" % h.hostname
-			#for k,v in  monitor_dic[h.hostname].items(): #k stands for the monitor indicator name
 			for service,alert_index in p.services.items():
+				#print service,alert_index , monitor_dic[h.hostname]
+				# here should be add a exception , for the monitor_dic[h.hostname][service],  if no data for this service from client ,will trigger exception 
 				alert_handle.handle(service,alert_index,  monitor_dic[h.hostname][service],  redis_connector.r)	
-				#print  service,  monitor_dic[h.hostname][service]
-				"""if p.services.has_key(k):  #services will be monitored 
-					print '------------------------------------------>\033[46;1mwill only monitor \033[0m', k
-					#print p.services[k]
-					alert_handle.handle(k, p.services[k], v)	
-				"""
 	else: #host not in database or not enalbed for monitoring
 		print "\033[34;1mnot going to monitor server:\033[0m", h.hostname

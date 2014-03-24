@@ -4,14 +4,30 @@ import monitor_list
 import os,commands,stat
 from hashlib import md5
 import db_connector,key_gen
+import redis_connector 
 from TriAquae.hosts.models import IP
 recv_dir = 'recv/'
 
 #server_address = '192.168.2.248'
 block_list = []
-status_file = 'state/monitor_status.json'
 
-if os.path.exists(status_file):
+monitor_dic = redis_connector.r.get('TriAquae_monitor_status')
+if monitor_dic is not None:
+	monitor_dic = json.loads(monitor_dic)
+	#make sure all the hosts are in the monitor list
+        for h in IP.objects.filter(status_monitor_on=True):
+        	if h.hostname not in monitor_dic.keys():
+               		 monitor_dic[h.hostname] = {}
+else:
+        monitor_dic = {}
+        for h in IP.objects.filter(status_monitor_on=True):
+                 monitor_dic[h.hostname] = {}
+
+
+print monitor_dic 
+
+print '-----------------------------------------------------------'
+"""if os.path.exists(status_file):
 	with open(status_file) as f:
 		monitor_dic = json.load(f)
 		#make sure all the hosts are in the monitor list
@@ -23,8 +39,7 @@ else:
 	for h in IP.objects.filter(status_monitor_on=True):
 		 monitor_dic[h.hostname] = {}
 
-
-print monitor_dic 
+"""
 
 class MyTCPHandler(SocketServer.BaseRequestHandler):
     def handle(self):
@@ -107,8 +122,9 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
 				self.request.send('FileTransferNotComplete')	
 		elif self.data == "getMonitorStatusData":
 			print "going to serialize Monitor_dic"
-			with open(status_file, 'wb') as f:
-				json.dump(monitor_dic, f)
+			
+			#with open(status_file, 'wb') as f:
+			#	json.dump(monitor_dic, f)
 		elif self.data == 'getHardwareInfo':
 			import Hardware_Collect_Script
 			hardware_data = Hardware_Collect_Script.collectAsset() 
@@ -124,8 +140,10 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
 			print "************\n",monitor_dic[client_hostname]
 			# push status data into JSON file
 			if client_hostname == 'localhost':
-				with open(status_file, 'wb') as f:
-					json.dump(monitor_dic, f)
+				redis_connector.r['TriAquae_monitor_status'] = json.dumps(monitor_dic)
+				redis_connector.r.save()
+				#with open(status_file, 'wb') as f:
+				#	json.dump(monitor_dic, f)
 
 				print 'status inserted into JSON file'
 				

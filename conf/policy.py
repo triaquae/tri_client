@@ -23,7 +23,7 @@ class Policy:
 class defaultPolicy(Policy):
 	name = 'TriaquaeDefaultPolicy'
 	groups = ['TestGroup']
-	hosts = ['localhost']
+	hosts = ['localhost','www.baidu.com']
 	services = {
 		'cpu': service.cpu(),
 		'memory':  service.memory(),
@@ -35,7 +35,7 @@ class defaultPolicy(Policy):
 class TestPolicy(Policy):
         name = 'testPl'
         #groups = ['BJ']
-        hosts = ['localhost']
+        hosts = ['localhost','www.baidu.com']
         services = {
                 'load': service.load(),
 		'memory':  service.memory(),
@@ -45,8 +45,8 @@ class TestPolicy(Policy):
 
 enabled_policy =( 
 	defaultPolicy(),
-	#Policy(),
-	#TestPolicy(),
+	Policy(),
+	TestPolicy(),
 )
 
 #print enabled_policy[0].services[0].index_dic

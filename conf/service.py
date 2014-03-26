@@ -50,7 +50,7 @@ class memory(DefaultService):
 	name = 'memory'
 	index_dic = {
 		'SwapUsage_p':['percentage', 80, 90],
-		'MemUsage_p': ['percentage', 60, 65],
+		'MemUsage_p': ['percentage', 10, 65],
 		'MemUsage': [None, 60, 65],
 	}
 	graph_index = ['MemUsage','SwapUsage']

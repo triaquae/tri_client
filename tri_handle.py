@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import json,os,sys
-from conf import policy
+from conf import policy, hosts
 import db_connector
 from TriAquae.hosts.models import Group,IP
 import monitor_data_handle as alert_handle
@@ -34,13 +34,13 @@ for n,p in  enumerate(policy.enabled_policy):
 			else:
 				if n not in host_dic[host]: #will not add the duplicate policy name
 					host_dic[host].append(n)
-
 print host_dic
 print "\033[42;1m-----\033[0m"
 
 
 #host_list =   set(host_list)
 for h,p_index_list in  host_dic.items():  #p_index stands for policy_index in enabled_policy list 
+  alert_list = []
   for p_index in p_index_list:
     	p = policy.enabled_policy[p_index] #find this host belongs to which policy
 	if monitor_dic.has_key(h.hostname): #host needs to be monitored
@@ -51,6 +51,16 @@ for h,p_index_list in  host_dic.items():  #p_index stands for policy_index in en
 			for service,alert_index in p.services.items():
 				#print service,alert_index , monitor_dic[h.hostname]
 				# here should be add a exception , for the monitor_dic[h.hostname][service],  if no data for this service from client ,will trigger exception 
-				alert_handle.handle(service,alert_index,  monitor_dic[h.hostname][service],  redis_connector.r)	
+				s = alert_handle.handle(service,alert_index,  monitor_dic[h.hostname][service])	
+				alert_list.append(s)
 	else: #host not in database or not enalbed for monitoring
 		print "\033[34;1mnot going to monitor server:\033[0m", h.hostname
+  if hosts.monitored_hosts.has_key(h.hostname):
+	customized_policy = hosts.monitored_hosts[h.hostname]
+	print "*"*50,customized_policy.services
+	for service,alert_index in customized_policy.services.items():	
+		s = alert_handle.handle(service,alert_index,  monitor_dic[h.hostname][service])
+		alert_list.append(s)
+  else:
+	print 'no customized policy',h
+  print '+'*50,alert_list,'\n'

@@ -45,8 +45,9 @@ class TestPolicy(Policy):
 
 enabled_policy =( 
 	defaultPolicy(),
-	#Policy(),
-	#TestPolicy(),
+	Policy(),
+	TestPolicy(),
+	Policy(),
 )
 
 #print enabled_policy[0].services[0].index_dic

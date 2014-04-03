@@ -1,10 +1,11 @@
 #!/usr/bin/env python
-import json,os,sys
+import json,os,sys,threading
 from conf import policy, hosts
+from get_monitor_dic import get_monitor_host_list
 import db_connector
 from TriAquae.hosts.models import Group,IP
 import monitor_data_handle as alert_handle
-import time
+import time,pickle
 import redis_connector 
 
 #pull out status data from Redis
@@ -13,7 +14,8 @@ if monitor_dic is not None:
 	monitor_dic = json.loads(monitor_dic)
 else:
 	sys.exit("No monitor data found in Redis,please check")
-	
+
+"""
 #pull out all the hosts in enabled_policy
 def get_monitor_host_list():
 	host_dic = {}
@@ -36,10 +38,7 @@ def get_monitor_host_list():
 					if n not in host_dic[host]: #will not add the duplicate policy name
 						host_dic[host].append(n)
 	return host_dic
-h_dic = get_monitor_host_list()
-print h_dic
-print "\033[42;1m-----\033[0m"
-
+"""
 
 #host_list =   set(host_list)
 def data_handler(host_dic):
@@ -94,8 +93,26 @@ def data_handler(host_dic):
 		 for s in  g:
 			print s
 
-while True:
+def multi_job(m_dic):
+	def run(name):
+		print 'going to run job......',name
+	threading.Thread(target=run, args=(m_dic,)).start()
 
-	data_handler(get_monitor_host_list())
+
+time_counter = time.time()
+
+
+while True:
+	
+	monitor_list = get_monitor_host_list()
+	data_handler( monitor_list )
 	print '033[42;1m-----Executed...>>>>\033[0m '
+	if time.time() - time_counter > 15:
+		print '\033[45;1m-----draw lines----\033[0m'
+		time.sleep(10)
+		print 'sleep is done....'
+		time_counter = time.time()
+		#multi_job(monitor_list)
+		redis_connector.r['Graph_list'] = pickle.dumps(monitor_list)
+	print monitor_list
 	time.sleep(10)

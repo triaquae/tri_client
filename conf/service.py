@@ -5,7 +5,7 @@ class DefaultService:
 	interval = 300
 	index_dic = None
 	graph_index = {
-		'index' : None,
+		'index' :[],
 		'title' : name, 
 	} 
 	lt_operator = [] #if this sets to empty,all the status will be caculated in > mode , gt = > 

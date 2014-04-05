@@ -2,7 +2,7 @@ import random
 
 
 max_point = 2000    # max point of exact data to keeps 
-interval = {
+data_storage_interval = {
 	'10min' : [600, 2016],   # keeps data for 2 weeks, interval 10 mins
         '20min'    : [1200, 2160], # keeps data for 30 days, interval 20 mins
         '1hour'  : [3600, 2160], # keeps data for 90 days, interval 60 mins
@@ -14,7 +14,7 @@ interval = {
 
 
 
-
+"""
 import time
 def draw():
         t_stamp = int(time.time())
@@ -30,3 +30,4 @@ def draw():
 
 
 draw()
+"""

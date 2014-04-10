@@ -5,7 +5,7 @@ from get_monitor_dic import get_monitor_host_list
 import db_connector
 from TriAquae.hosts.models import Group,IP
 import monitor_data_handle as alert_handle
-import time,pickle
+import time,pickle,subprocess
 import redis_connector 
 
 #pull out status data from Redis
@@ -107,12 +107,14 @@ while True:
 	monitor_list = get_monitor_host_list()
 	data_handler( monitor_list )
 	print '033[42;1m-----Executed...>>>>\033[0m '
-	if time.time() - time_counter > 15:
+	"""if time.time() - time_counter > 15:
 		print '\033[45;1m-----draw lines----\033[0m'
 		time.sleep(10)
 		print 'sleep is done....'
 		time_counter = time.time()
 		#multi_job(monitor_list)
 		redis_connector.r['Graph_list'] = pickle.dumps(monitor_list)
+	"""
+	p = subprocess.Popen('python /home/alex/tri_client/status_data_optimzation.py', stdout=subprocess.PIPE, shell=True)
 	print monitor_list
 	time.sleep(10)

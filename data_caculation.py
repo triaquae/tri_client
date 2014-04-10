@@ -16,3 +16,4 @@ def get_average(source_data):
 
 	avg = [round(x/len(data_list),2)  for x in  total_value ] 
 	return avg
+#print get_average(a)

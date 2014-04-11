@@ -49,8 +49,8 @@ def status_data_collection():
 				last_point_time = STATUS_DATA[service][dataset_name][-1][0]
 				if current_time_stamp - last_point_time < interval[0]:  #interval[0] is the step,interval[1] is max point limit
 					pass #print "\033[43;1m not hitting the interval yet\033[0m", dataset_name
-				else:
-					period_start_index = STATUS_DATA[service]['last_check_index_dic'][dataset_name] + 1 
+				else: #hitting the periodic inverval 
+					period_start_index = STATUS_DATA[service]['last_check_index_dic'][dataset_name]  
 					if len( STATUS_DATA[service]['Actual'][period_start_index:] ) > 0: #has new data since last data collection	
 						#print '-------->>>',STATUS_DATA[service]['Actual'][period_start_index:] #get index list starts from last slice end point
 						average_data = data_caculation.get_average(STATUS_DATA[service]['Actual'][period_start_index:])
@@ -59,18 +59,22 @@ def status_data_collection():
 						average_list.extend(average_data)
 						STATUS_DATA[service][dataset_name ].append(  average_list  )
 						print STATUS_DATA[service][dataset_name ]
+						#set new period start index
+						new_period_start_index = len(STATUS_DATA[service]['Actual']) 
+						STATUS_DATA[service]['last_check_index_dic'][dataset_name] = new_period_start_index 
+						
 					else:
 						print "hit the interval but not new data since last point, what's wrong?"
 					print '\033[42;1m ---->hitting hte interval ...\033[0m', dataset_name
 			    except KeyError:pass
 		redis.r['STATUS_DATA::%s' % h.hostname] = json.dumps(STATUS_DATA)
 		for n,v in STATUS_DATA.items():
-			print "\033[42;1m %s \033[0m" %n
+			print "\033[42;1m %s \033[0m" %n, STATUS_DATA[n]["last_check_index_dic"]
 			#for i in v['Actual']:
 			for i,data in v.items():
-				print i 
 				if len(data) > 1 and  i != "last_check_index_dic":
-				  for d in data:
+				  print i,"---------->start date------>", time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(data[0][0] )) 
+				  for d in data[-10:]:
 					print '\t',d, time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(d[0] ))
 				else:
 					pass #print i,data

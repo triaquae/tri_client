@@ -20,7 +20,7 @@ $(function() {
 		$('#container').highcharts('StockChart', {
 
 			title: {
-				text: 'Memory usage of localhost'
+				text: 'Memory usage of localhost (KB)'
 			},
 			
 			xAxis: {
@@ -31,7 +31,12 @@ $(function() {
 				title: { text: 'KB'}
 			},	
 			rangeSelector : {
-				buttons : [{
+				buttons : [
+				   { type: 'minute',
+				     count: 1,
+				     text: 'min'},
+ 
+				   {
 					type : 'hour',
 					count : 1,
 					text : '1h'
@@ -75,8 +80,8 @@ $(function() {
 	</head>
 	<body>
 <div id="container" style="height: 500px; min-width: 500px"></div>
-
 <script src="/static/highchart/js/highstock.js"></script>
+<script src="/static/highchart/js/themes/gray.js"></script>
 <script src="/static/highchart/js/modules/exporting.js"></script>
 	</body>
 </html>

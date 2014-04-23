@@ -4,7 +4,7 @@ import json
 
 def handle(name, alert_index, status_data ):
 	host_status_dic = {}
-	#print '---------------->monitor name',name,alert_index.interval, status_data['last_check']
+	#print '---------------->monitor name',name,alert_index.interval, time.time() - status_data['last_check']
 	time_diff = time.time() - status_data['last_check'] 
 	if time_diff < alert_index.interval:  # service works fine
 		#print status_data

@@ -26,4 +26,4 @@ def get_monitor_host_list():
         return host_dic
 
 
-
+#print get_monitor_host_list()

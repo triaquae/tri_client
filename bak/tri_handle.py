@@ -8,15 +8,37 @@ import monitor_data_handle as alert_handle
 import time,pickle,subprocess
 import redis_connector 
 
-def pull_status_data():
-	#pull out status data from Redis
-	monitor_dic = redis_connector.r.get('TriAquae_monitor_status')
-	if monitor_dic is not None:
-		monitor_dic = json.loads(monitor_dic)
-		return monitor_dic
-	else:
-		sys.exit("No monitor data found in Redis,please check")
+#pull out status data from Redis
+monitor_dic = redis_connector.r.get('TriAquae_monitor_status')
+if monitor_dic is not None:
+	monitor_dic = json.loads(monitor_dic)
+else:
+	sys.exit("No monitor data found in Redis,please check")
 
+"""
+#pull out all the hosts in enabled_policy
+def get_monitor_host_list():
+	host_dic = {}
+	for n,p in  enumerate(policy.enabled_policy):
+		if p.groups is not None: 
+			for g in p.groups:
+			  for h in IP.objects.filter(group__name = g):
+				if not host_dic.has_key(h): 
+					host_dic[h] = [n] #add policy order into dic 
+				else:
+					host_dic[h].append(n)
+
+				#host_list.extend( IP.objects.filter(group__name = g) )
+		if p.hosts is not None:	
+			for h in p.hosts:
+				host = IP.objects.get(hostname= h)
+				if not host_dic.has_key(host):
+					host_dic[host] = [n] #add policy order into dic
+				else:
+					if n not in host_dic[host]: #will not add the duplicate policy name
+						host_dic[host].append(n)
+	return host_dic
+"""
 
 #host_list =   set(host_list)
 def data_handler(host_dic):
@@ -64,12 +86,12 @@ def data_handler(host_dic):
 		for msg in  alerts:print msg #for i in alerts:print i
 
 
-	#print '\033[42;1m graph list ----------\033[0m\n'
-	#for h,g in graph_dic.items():
-	#	print h
-	#	if len(g) >0:
-	#	 for s in  g:
-	#		print s
+	print '\033[42;1m graph list ----------\033[0m\n'
+	for h,g in graph_dic.items():
+		print h
+		if len(g) >0:
+		 for s in  g:
+			print s
 
 def multi_job(m_dic):
 	def run(name):
@@ -78,21 +100,21 @@ def multi_job(m_dic):
 
 
 time_counter = time.time()
-monitor_list = get_monitor_host_list()
 
 
-counter = 0
 while True:
-	if time.time() - time_counter > 60: #refresh monitor list every 60 sec
-		print '------------------------------------------------------------------->'	
-		#del sys.modules['conf.policy']
-		reload(policy.service) 
-		monitor_list = get_monitor_host_list()
-		time_counter = time.time()
-	monitor_dic = pull_status_data()
+	
+	monitor_list = get_monitor_host_list()
 	data_handler( monitor_list )
-	print '\033[42;1m-----Alert Checking Executed...>>>>\033[0m' ,counter
-	counter += 1
+	print '033[42;1m-----Executed...>>>>\033[0m '
+	"""if time.time() - time_counter > 15:
+		print '\033[45;1m-----draw lines----\033[0m'
+		time.sleep(10)
+		print 'sleep is done....'
+		time_counter = time.time()
+		#multi_job(monitor_list)
+		redis_connector.r['Graph_list'] = pickle.dumps(monitor_list)
+	"""
 	#p = subprocess.Popen('python /home/alex/tri_client/status_data_optimzation.py', stdout=subprocess.PIPE, shell=True)
-	#print monitor_list
+	print monitor_list
 	time.sleep(10)

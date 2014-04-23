@@ -12,7 +12,7 @@ class DefaultService:
 
 class upCheck(DefaultService):
 	name = 'host status'
-	interval = 10
+	interval = 30 
 	index_dic = {
 		'host_status' : [None],
 	}
@@ -55,8 +55,8 @@ class load(DefaultService):
 class memory(DefaultService):
 	name = 'memory'
 	index_dic = {
-		'SwapUsage_p':['percentage', 80, 90],
-		'MemUsage_p': ['percentage', 10, 65],
+		'SwapUsage_p':['percentage', 66, 91],
+		'MemUsage_p': ['percentage', 68, 92],
 		'MemUsage': [None, 60, 65],
 	}
 	graph_index = {

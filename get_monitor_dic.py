@@ -1,11 +1,11 @@
 import json,os,sys,threading
-from conf import policy, hosts
+from conf import templates, hosts
 import db_connector
 from TriAquae.hosts.models import Group,IP
 
 def get_monitor_host_list():
         host_dic = {}
-        for n,p in  enumerate(policy.enabled_policy):
+        for n,p in  enumerate(templates.enabled_templates):
                 if p.groups is not None:
                         for g in p.groups:
                           for h in IP.objects.filter(group__name = g):

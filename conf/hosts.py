@@ -1,12 +1,12 @@
 #!/usr/bin/env python 
-import service
+from services import linux
 
 
 
 class localhost:
 	#hostname = 'localhost'
 	services = {
-		'ngnix': service.ngnix(),
+		'ngnix': linux.ngnix(),
 	}
 	alert_policy = None
 

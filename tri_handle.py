@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import json,os,sys,threading
-from conf import policy, hosts
+from conf import templates, hosts
 from get_monitor_dic import get_monitor_host_list
 import db_connector
 from TriAquae.hosts.models import Group,IP
@@ -22,11 +22,11 @@ def pull_status_data():
 def data_handler(host_dic):
 	graph_dic = {}
 	alert_dic = {}
-	for h,p_index_list in  host_dic.items():  #p_index stands for policy_index in enabled_policy list 
+	for h,p_index_list in  host_dic.items():  #p_index stands for templates.index in enabled_templates.list 
 	  alert_list = []
 	  graph_dic[h.hostname] = [] #initialize the list
 	  for p_index in set(p_index_list):
-		p = policy.enabled_policy[p_index] #find this host belongs to which policy
+		p = templates.enabled_templates[p_index] #find this host belongs to which policy
 		if monitor_dic.has_key(h.hostname): #host needs to be monitored
 			if len(monitor_dic[h.hostname]) == 0: 
 				alert_list.append({"ServerDown":"No data received from client,is the agent or the host down"} )
@@ -46,9 +46,9 @@ def data_handler(host_dic):
 		else: #host not in database or not enalbed for monitoring
 			print "\033[34;1mnot going to monitor server:\033[0m", h.hostname
 	  if hosts.monitored_hosts.has_key(h.hostname):
-		customized_policy = hosts.monitored_hosts[h.hostname]
-		print "*"*50,'Customized'#,customized_policy.services
-		for service,alert_index in customized_policy.services.items():
+		customized_templates= hosts.monitored_hosts[h.hostname]
+		print "*"*50,'Customized'#,customized_templates.services
+		for service,alert_index in customized_templates.services.items():
 		  try:	
 			s = alert_handle.handle(service,alert_index,  monitor_dic[h.hostname][service])
 			if len(s) !=0:alert_list.append(s)
@@ -56,7 +56,7 @@ def data_handler(host_dic):
 			alert_list.append({"NoValidServiceData":(service,"service not exist in client datat")} )
 			
 	  #else:
-	  #	print 'no customized policy',h
+	  #	print 'no customized templates.,h
 	  alert_dic[h.hostname] = alert_list
 	print '\033[41;1m*\033[0m'*50,'ALert LIST\n'
 	for host,alerts in  alert_dic.items():
@@ -85,8 +85,8 @@ counter = 0
 while True:
 	if time.time() - time_counter > 60: #refresh monitor list every 60 sec
 		print '------------------------------------------------------------------->'	
-		#del sys.modules['conf.policy']
-		reload(policy.service) 
+		#del sys.modules['conf.templates.]
+		reload(templates.service) 
 		monitor_list = get_monitor_host_list()
 		time_counter = time.time()
 	monitor_dic = pull_status_data()

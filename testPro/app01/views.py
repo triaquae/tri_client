@@ -18,7 +18,7 @@ def convert_to_float(status):
 def test(request):
 	return render_to_response('test.html',{'test': 'test your .....'})
 
-def index(request):
+def index2(request):
 	return render_to_response('index.htm')
 
 

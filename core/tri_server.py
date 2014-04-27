@@ -23,22 +23,9 @@ else:
                  monitor_dic[h.hostname] = {}
 
 
-print monitor_dic 
+#print monitor_dic 
 
 print '-----------------------------------------------------------'
-"""if os.path.exists(status_file):
-	with open(status_file) as f:
-		monitor_dic = json.load(f)
-		#make sure all the hosts are in the monitor list
-		for h in IP.objects.filter(status_monitor_on=True):
-			if h.hostname not in monitor_dic.keys():
-				monitor_dic[h.hostname] = {}
-else:
-	monitor_dic = {}
-	for h in IP.objects.filter(status_monitor_on=True):
-		 monitor_dic[h.hostname] = {}
-
-"""
 
 class MyTCPHandler(SocketServer.BaseRequestHandler):
     def handle(self):
@@ -64,7 +51,7 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
         # self.request is the TCP socket connected to the client
 	def RSA_verifyication(sock):
 		RSA_signal, encrypted_data,random_num_from_client = json.loads(sock.recv(1024))
-		print RSA_signal, encrypted_data,random_num_from_client
+		#print RSA_signal, encrypted_data,random_num_from_client
 		if RSA_signal == 'RSA_KEY_Virification':
 			#encrypted_data = "iwTgqSzMcNOHauWdXXc+rgfbWt6IUXmdIXUqNUJ2U7FZKISc2WR2yAJrq7ldR3TxQEppWgIo/Ycj\nA5gl0fGDVvAEvV02CKZ3gZEI6fWpiMoy6ucpFFDyVAWUrpiXdUOVKxOsDXGgeOObgvd1jsEQCo4i\ncLCBTWDn0HfyQic+Btm1txXc7Nw9jknUCZx6Y8I+6JaIYjNRLwJ6kSMwpTsfP37lvrQfdUkWu3bX\npV9z3hHOQ6+A8rlK7fmL1zk75TXDCmnrLY88UIv6BL4zPXtim4BCD7PlOvDG296br0VIcvF5uhqr\ntj7zOcbA81P1JBFm1nMJqLv+SB5sit923v05XA==\n"
 			
@@ -93,7 +80,6 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
 		print "{} wrote:",self.client_address[0]
 		if self.data.startswith('CMD_Excution|'):
 			cmd= self.data.split('CMD_Excution|')[1]
-			print cmd,'=====|||||'
 			cmd_status,result = commands.getstatusoutput(cmd)	
 			print 'host:%s \tcmd:%s \tresult:%s' %(self.client_address[0], cmd, cmd_status)	
 			self.request.sendall(pickle.dumps( (cmd_status,result) ))
@@ -123,8 +109,6 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
 		elif self.data == "getMonitorStatusData":
 			print "going to serialize Monitor_dic"
 			
-			#with open(status_file, 'wb') as f:
-			#	json.dump(monitor_dic, f)
 		elif self.data == 'getHardwareInfo':
 			import Hardware_Collect_Script
 			hardware_data = Hardware_Collect_Script.collectAsset() 
@@ -134,16 +118,14 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
 			status_data = json.loads(self.request.recv(8096) )	
 			client_hostname =  status_data['hostname']
 			for name,service_status in status_data.items():
-				print name,service_status
+				#print name,service_status
 				if type(service_status) is dict:service_status['last_check'] = time.time()
 				monitor_dic[ client_hostname][name] =  service_status
-			print "************\n",monitor_dic[client_hostname]
+			print "************get conn from %s------\n" %client_hostname
 			# push status data into JSON file
 			if client_hostname == 'localhost':
 				redis_connector.r['TriAquae_monitor_status'] = json.dumps(monitor_dic)
 				redis_connector.r.save()
-				#with open(status_file, 'wb') as f:
-				#	json.dump(monitor_dic, f)
 
 				print 'status inserted into JSON file'
 				

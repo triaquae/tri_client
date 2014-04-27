@@ -13,6 +13,6 @@ class DefaultService:
 class upCheck(DefaultService):
         name = 'host status'
         interval = 30
-        index_dic = {
+        triggers= {
                 'host_status' : [None],
         }

@@ -27,7 +27,7 @@ def data_handler(host_dic):
 	  alert_list = []
 	  graph_dic[h.hostname] = [] #initialize the list
 	  for p_index in set(p_index_list):
-		p = templates.enabled_templates[p_index] #find this host belongs to which policy
+		p = templates.enabled_templates[p_index] #find this host belongs to which template
 		if monitor_dic.has_key(h.hostname): #host needs to be monitored
 			if len(monitor_dic[h.hostname]) == 0: 
 				alert_list.append({"ServerDown":"No data received from client,is the agent or the host down"} )
@@ -36,8 +36,6 @@ def data_handler(host_dic):
 			else: 
 				print "\033[46;1m%s\033[0m" % h.hostname
 				for service,alert_index in p.services.items():
-				  if  alert_index.graph_index['index'] is not None:
-					graph_dic[h.hostname].append( alert_index.graph_index  ) #'||||'
 				  try:
 					s = alert_handle.handle(service,alert_index,  monitor_dic[h.hostname][service])	
 					if len(s) !=0:alert_list.append(s)
@@ -48,7 +46,7 @@ def data_handler(host_dic):
 			print "\033[34;1mnot going to monitor server:\033[0m", h.hostname
 	  if hosts.monitored_hosts.has_key(h.hostname):
 		customized_templates= hosts.monitored_hosts[h.hostname]
-		print "*"*50,'Customized'#,customized_templates.services
+		#print "*"*50,'Customized'#,customized_templates.services
 		for service,alert_index in customized_templates.services.items():
 		  try:	
 			s = alert_handle.handle(service,alert_index,  monitor_dic[h.hostname][service])
@@ -59,11 +57,12 @@ def data_handler(host_dic):
 	  #else:
 	  #	print 'no customized templates.,h
 	  alert_dic[h.hostname] = alert_list
-	print '\033[41;1m*\033[0m'*50,'ALert LIST\n'
-	for host,alerts in  alert_dic.items():
-		print '\033[31;1m%s\033[0m' %host
-		for msg in  alerts:print msg #for i in alerts:print i
-
+	#print '\033[41;1m*\033[0m'*50,'ALert LIST\n'
+	#for host,alerts in  alert_dic.items():
+	#	print '\033[31;1m%s\033[0m' %host
+	#	for msg in  alerts:print msg #for i in alerts:print i
+	alert_dic['TimeStamp'] = time.time()
+	redis_connector.r['TempTriAquaeAlertList'] = json.dumps(alert_dic)
 
 	#print '\033[42;1m graph list ----------\033[0m\n'
 	#for h,g in graph_dic.items():
@@ -84,12 +83,12 @@ monitor_list = get_monitor_host_list()
 
 counter = 0
 while True:
-	if time.time() - time_counter > 60: #refresh monitor list every 60 sec
-		print '------------------------------------------------------------------->'	
+	#if time.time() - time_counter > 60: #refresh monitor list every 60 sec
+		#print '------------------------------------------------------------------->'	
 		#del sys.modules['conf.templates.]
-		reload(templates.service) 
-		monitor_list = get_monitor_host_list()
-		time_counter = time.time()
+		#reload(templates.service) 
+		#monitor_list = get_monitor_host_list()
+		#time_counter = time.time()
 	monitor_dic = pull_status_data()
 	data_handler( monitor_list )
 	print '\033[42;1m-----Alert Checking Executed...>>>>\033[0m' ,counter

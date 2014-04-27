@@ -28,8 +28,8 @@ class load(DefaultService):
         triggers = {
                 'uptime': ['string', 'd',90],
                 #'ptime': ['string', 'd',90],
-                'load1': [int, 3,9],
-                'load5': [int, 3,9],
+                'load1': [int, 4,9],
+                'load5': [int, 3,7],
                 'load15': [int, 3,9],
         }
         graph_index = {

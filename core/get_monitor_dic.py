@@ -1,3 +1,4 @@
+import global_setting
 import json,os,sys,threading
 from conf import templates, hosts
 import db_connector

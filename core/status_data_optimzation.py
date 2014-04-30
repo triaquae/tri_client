@@ -1,6 +1,6 @@
 from get_monitor_dic import get_monitor_host_list
 import json,time
-from conf import policy, hosts
+from conf import templates, hosts
 import redis_connector as redis
 from graph import data_storage_interval
 import data_caculation
@@ -15,8 +15,8 @@ def status_data_collection():
 			pass #print redis.r.get('STATUS_DATA::%s' % h.hostname)
 		STATUS_DATA = json.loads(redis.r.get('STATUS_DATA::%s' % h.hostname))
 		print '\033[45;1m %s \033[0m ' % h.hostname	 
-		for p_index in p_index_list:   #policy index list for each host 
-		  p = policy.enabled_policy[p_index]
+		for p_index in p_index_list:   #template index list for each host 
+		  p = templates.enabled_templates[p_index]
 		  for service,obj in  p.services.items(): 
 			  if latest_status[h.hostname].has_key(service): # data available from client 
 				last_check_stamp = latest_status[h.hostname][service]['last_check']

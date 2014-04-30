@@ -1,6 +1,5 @@
 import SocketServer,time
 import pickle,json
-import monitor_list
 import os,commands,stat
 from hashlib import md5
 import db_connector,key_gen

@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import global_setting
 import json,os,sys,threading
 from conf import templates, hosts
 from get_monitor_dic import get_monitor_host_list

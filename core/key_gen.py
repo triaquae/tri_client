@@ -1,7 +1,8 @@
+import global_setting
 import RSA_key,sys,os
 
 
-private_file, public_file = 'conf/.rsa_private.id', 'conf/.rsa_public.id'
+private_file, public_file = '%s/conf/.rsa_private.id' % global_setting.base_dir, '%s/conf/.rsa_public.id' %global_setting.base_dir
 if not os.path.isfile(private_file):
 	print "\033[31;1mError:RSA private key file %s is not exsit.\033[0m" % private_file
 	sys.exit()

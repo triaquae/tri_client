@@ -2,9 +2,9 @@ import triaquae_env
 from scripts import load,cpu,memory,upCheck
 class MonitorModel:
 	check_interval = 30
-	alert_enabled = True
-	alert_method = 'email'
-	contact = 'lijie3721@126.com'	
+	#alert_enabled = True
+	#alert_method = 'email'
+	#contact = 'lijie3721@126.com'	
 	script = None
 	
 class upCheck(MonitorModel):

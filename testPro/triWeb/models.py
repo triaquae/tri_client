@@ -81,11 +81,14 @@ class Idc(models.Model):
 
 class Group(models.Model):
     name = models.CharField(max_length=50,unique=True)
+    display_name = models.CharField(max_length=50)
+    template_list = models.ManyToManyField('templates')
     def __unicode__(self):
-        return self.name
+        return self.display_name
 
 class IP(models.Model):
     hostname=models.CharField(max_length=50, unique=True)
+    display_name = models.CharField(max_length=50, unique = True)
     ip = models.IPAddressField(unique=True)
     idc = models.ForeignKey(Idc, null=True, blank=True)
     group = models.ManyToManyField(Group, null=True, blank=True)
@@ -113,7 +116,7 @@ class IP(models.Model):
     mem_usage_warning = models.IntegerField(default=0,blank=True, verbose_name="memoryUsage% >")
     mem_usage_critical = models.IntegerField(default=0,blank=True)
     def __unicode__(self):
-        return self.hostname
+        return self.display_name
 
 class RemoteUser(models.Model):
     name = models.CharField(max_length=50, unique=True)
@@ -197,7 +200,7 @@ class templates(models.Model):  #monitor template
     name = models.CharField(max_length=50, unique=True)
     service_list =  models.ManyToManyField('services')
     graph_list = models.ManyToManyField('graphs',blank=True,null=True)
-    groups = models.ManyToManyField('Group',blank=True,null=True)
+    #groups = models.ManyToManyField('Group',blank=True,null=True)
     
     def __unicode__(self):
         return self.name

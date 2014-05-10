@@ -42,7 +42,6 @@ class GroupForm(forms.ModelForm):
             groupmachine.ip_set = self.cleaned_data['ips']
             self.save_m2m()
         return groupmachine
-
 class GroupAdmin(admin.ModelAdmin):
     form = GroupForm
         

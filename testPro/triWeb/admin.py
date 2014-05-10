@@ -54,10 +54,9 @@ class TemplatesAdmin(admin.ModelAdmin):
 
 class ServicesAdmin(admin.ModelAdmin):
     list_display = ('name', 'check_interval')
-    filter_horizontal = ('item_list',)
+    filter_horizontal = ('item_list','trigger_list')
 class ItemsAdmin(admin.ModelAdmin):
     list_display = ('name', 'monitor_type','key','data_type','enabled')
-
 
 class LogAdmin(admin.ModelAdmin):
     list_display = ('user','ip','event_type','cmd','event_log','result','track_mark')

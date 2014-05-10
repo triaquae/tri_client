@@ -93,13 +93,11 @@ class IP(models.Model):
     idc = models.ForeignKey(Idc, null=True, blank=True)
     group = models.ManyToManyField(Group, null=True, blank=True)
     template_list = models.ManyToManyField('templates')
+    custom_services = models.ManyToManyField('services')
     port = models.IntegerField(default='22')
     os = models.CharField(max_length=20, default='linux', verbose_name='Operating System')
 
     #snmp related
-    alert_limit = models.IntegerField(default=5)
-    snmp_alert_limit = models.IntegerField(default=5)
-    asset_collection = models.BooleanField(default=True,verbose_name='enable asset collection')
     status_monitor_on = models.BooleanField(default=True)
     snmp_on = models.BooleanField(default=True)
     snmp_version = models.CharField(max_length=10,default='2c')
@@ -109,12 +107,6 @@ class IP(models.Model):
     snmp_user = models.CharField(max_length=50,default='triaquae_snmp')
     snmp_pass = models.CharField(max_length=50,default='my_pass')
 
-    system_load_warning = models.IntegerField(default=0,blank=True,verbose_name="load >")
-    system_load_critical = models.IntegerField(default=0,blank=True)
-    cpu_idle_warning = models.IntegerField(default=0,blank=True, verbose_name = "cpuIdle% < ")
-    cpu_idle_critical= models.IntegerField(default=0,blank=True)
-    mem_usage_warning = models.IntegerField(default=0,blank=True, verbose_name="memoryUsage% >")
-    mem_usage_critical = models.IntegerField(default=0,blank=True)
     def __unicode__(self):
         return self.display_name
 
@@ -208,6 +200,7 @@ class templates(models.Model):  #monitor template
 class services(models.Model):  #services list
     name = models.CharField(max_length=50,unique=True)
     item_list = models.ManyToManyField('items')
+    trigger_list = models.ManyToManyField('triggers',blank=True)
     check_interval = models.IntegerField(default=300)
     #flexible_intervals = 
     def __unicode__(self):
@@ -215,10 +208,12 @@ class services(models.Model):  #services list
 
 class items(models.Model): # monitor item
     name = models.CharField(max_length=50, unique=True)
-    monitor_type = models.CharField(max_length=50)
+    monitor_type_list = (('agent','TriAgent'),('snmp','SNMP'),('wget','Wget'))
+    monitor_type = models.CharField(max_length=50, choices=monitor_type_list)
     key = models.CharField(max_length=50)
     data_type_option = (('float','Float'),('string','String'),('integer', 'Integer') ) 
     data_type = models.CharField(max_length=50, choices=data_type_option)
+    plugin = models.ForeignKey('plugins') 
     unit = models.CharField(max_length=30,default='%')
     enabled = models.BooleanField(default=True)
     def __unicode__(self):
@@ -273,3 +268,9 @@ class operations(models.Model):
     send_via = models.CharField(max_length=30,choices=notifier_type)
     notice_times = models.IntegerField(default=5)
     notice_interval = models.IntegerField(default=300, verbose_name='notice_interval(sec)')
+class plugins(models.Model):
+    name = models.CharField(max_length=50)
+    description = models.CharField(max_length=150, blank=True)
+    plugin_file_name = models.CharField(max_length=150)
+    def __unicode__(self):
+	return self.name

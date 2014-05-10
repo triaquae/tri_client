@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from south.utils import datetime_utils as datetime
+import datetime
 from south.db import db
 from south.v2 import SchemaMigration
 from django.db import models
@@ -19,13 +19,24 @@ class Migration(SchemaMigration):
         db.create_table(u'triWeb_group', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('name', self.gf('django.db.models.fields.CharField')(unique=True, max_length=50)),
+            ('display_name', self.gf('django.db.models.fields.CharField')(max_length=50)),
         ))
         db.send_create_signal(u'triWeb', ['Group'])
+
+        # Adding M2M table for field template_list on 'Group'
+        m2m_table_name = db.shorten_name(u'triWeb_group_template_list')
+        db.create_table(m2m_table_name, (
+            ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True)),
+            ('group', models.ForeignKey(orm[u'triWeb.group'], null=False)),
+            ('templates', models.ForeignKey(orm[u'triWeb.templates'], null=False))
+        ))
+        db.create_unique(m2m_table_name, ['group_id', 'templates_id'])
 
         # Adding model 'IP'
         db.create_table(u'triWeb_ip', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('hostname', self.gf('django.db.models.fields.CharField')(unique=True, max_length=50)),
+            ('display_name', self.gf('django.db.models.fields.CharField')(unique=True, max_length=50)),
             ('ip', self.gf('django.db.models.fields.IPAddressField')(unique=True, max_length=15)),
             ('idc', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['triWeb.Idc'], null=True, blank=True)),
             ('port', self.gf('django.db.models.fields.IntegerField')(default='22')),
@@ -58,6 +69,15 @@ class Migration(SchemaMigration):
             ('group', models.ForeignKey(orm[u'triWeb.group'], null=False))
         ))
         db.create_unique(m2m_table_name, ['ip_id', 'group_id'])
+
+        # Adding M2M table for field template_list on 'IP'
+        m2m_table_name = db.shorten_name(u'triWeb_ip_template_list')
+        db.create_table(m2m_table_name, (
+            ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True)),
+            ('ip', models.ForeignKey(orm[u'triWeb.ip'], null=False)),
+            ('templates', models.ForeignKey(orm[u'triWeb.templates'], null=False))
+        ))
+        db.create_unique(m2m_table_name, ['ip_id', 'templates_id'])
 
         # Adding model 'RemoteUser'
         db.create_table(u'triWeb_remoteuser', (
@@ -196,24 +216,6 @@ class Migration(SchemaMigration):
         ))
         db.create_unique(m2m_table_name, ['templates_id', 'graphs_id'])
 
-        # Adding M2M table for field groups on 'templates'
-        m2m_table_name = db.shorten_name(u'triWeb_templates_groups')
-        db.create_table(m2m_table_name, (
-            ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True)),
-            ('templates', models.ForeignKey(orm[u'triWeb.templates'], null=False)),
-            ('group', models.ForeignKey(orm[u'triWeb.group'], null=False))
-        ))
-        db.create_unique(m2m_table_name, ['templates_id', 'group_id'])
-
-        # Adding M2M table for field hosts on 'templates'
-        m2m_table_name = db.shorten_name(u'triWeb_templates_hosts')
-        db.create_table(m2m_table_name, (
-            ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True)),
-            ('templates', models.ForeignKey(orm[u'triWeb.templates'], null=False)),
-            ('ip', models.ForeignKey(orm[u'triWeb.ip'], null=False))
-        ))
-        db.create_unique(m2m_table_name, ['templates_id', 'ip_id'])
-
         # Adding model 'services'
         db.create_table(u'triWeb_services', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
@@ -349,11 +351,17 @@ class Migration(SchemaMigration):
         # Deleting model 'Group'
         db.delete_table(u'triWeb_group')
 
+        # Removing M2M table for field template_list on 'Group'
+        db.delete_table(db.shorten_name(u'triWeb_group_template_list'))
+
         # Deleting model 'IP'
         db.delete_table(u'triWeb_ip')
 
         # Removing M2M table for field group on 'IP'
         db.delete_table(db.shorten_name(u'triWeb_ip_group'))
+
+        # Removing M2M table for field template_list on 'IP'
+        db.delete_table(db.shorten_name(u'triWeb_ip_template_list'))
 
         # Deleting model 'RemoteUser'
         db.delete_table(u'triWeb_remoteuser')
@@ -393,12 +401,6 @@ class Migration(SchemaMigration):
 
         # Removing M2M table for field graph_list on 'templates'
         db.delete_table(db.shorten_name(u'triWeb_templates_graph_list'))
-
-        # Removing M2M table for field groups on 'templates'
-        db.delete_table(db.shorten_name(u'triWeb_templates_groups'))
-
-        # Removing M2M table for field hosts on 'templates'
-        db.delete_table(db.shorten_name(u'triWeb_templates_hosts'))
 
         # Deleting model 'services'
         db.delete_table(u'triWeb_services')
@@ -459,7 +461,7 @@ class Migration(SchemaMigration):
             'date_joined': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime.now'}),
             'email': ('django.db.models.fields.EmailField', [], {'max_length': '75', 'blank': 'True'}),
             'first_name': ('django.db.models.fields.CharField', [], {'max_length': '30', 'blank': 'True'}),
-            'groups': ('django.db.models.fields.related.ManyToManyField', [], {'symmetrical': 'False', 'related_name': "u'user_set'", 'blank': 'True', 'to': u"orm['auth.Group']"}),
+            'groups': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['auth.Group']", 'symmetrical': 'False', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'is_active': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'is_staff': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
@@ -467,7 +469,7 @@ class Migration(SchemaMigration):
             'last_login': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime.now'}),
             'last_name': ('django.db.models.fields.CharField', [], {'max_length': '30', 'blank': 'True'}),
             'password': ('django.db.models.fields.CharField', [], {'max_length': '128'}),
-            'user_permissions': ('django.db.models.fields.related.ManyToManyField', [], {'symmetrical': 'False', 'related_name': "u'user_set'", 'blank': 'True', 'to': u"orm['auth.Permission']"}),
+            'user_permissions': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['auth.Permission']", 'symmetrical': 'False', 'blank': 'True'}),
             'username': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '30'})
         },
         u'contenttypes.contenttype': {
@@ -515,8 +517,10 @@ class Migration(SchemaMigration):
         },
         u'triWeb.group': {
             'Meta': {'object_name': 'Group'},
+            'display_name': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '50'})
+            'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '50'}),
+            'template_list': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['triWeb.templates']", 'symmetrical': 'False'})
         },
         u'triWeb.idc': {
             'Meta': {'object_name': 'Idc'},
@@ -529,6 +533,7 @@ class Migration(SchemaMigration):
             'asset_collection': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'cpu_idle_critical': ('django.db.models.fields.IntegerField', [], {'default': '0', 'blank': 'True'}),
             'cpu_idle_warning': ('django.db.models.fields.IntegerField', [], {'default': '0', 'blank': 'True'}),
+            'display_name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '50'}),
             'group': ('django.db.models.fields.related.ManyToManyField', [], {'symmetrical': 'False', 'to': u"orm['triWeb.Group']", 'null': 'True', 'blank': 'True'}),
             'hostname': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '50'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
@@ -548,7 +553,8 @@ class Migration(SchemaMigration):
             'snmp_version': ('django.db.models.fields.CharField', [], {'default': "'2c'", 'max_length': '10'}),
             'status_monitor_on': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'system_load_critical': ('django.db.models.fields.IntegerField', [], {'default': '0', 'blank': 'True'}),
-            'system_load_warning': ('django.db.models.fields.IntegerField', [], {'default': '0', 'blank': 'True'})
+            'system_load_warning': ('django.db.models.fields.IntegerField', [], {'default': '0', 'blank': 'True'}),
+            'template_list': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['triWeb.templates']", 'symmetrical': 'False'})
         },
         u'triWeb.items': {
             'Meta': {'object_name': 'items'},
@@ -633,8 +639,6 @@ class Migration(SchemaMigration):
         u'triWeb.templates': {
             'Meta': {'object_name': 'templates'},
             'graph_list': ('django.db.models.fields.related.ManyToManyField', [], {'symmetrical': 'False', 'to': u"orm['triWeb.graphs']", 'null': 'True', 'blank': 'True'}),
-            'groups': ('django.db.models.fields.related.ManyToManyField', [], {'symmetrical': 'False', 'to': u"orm['triWeb.Group']", 'null': 'True', 'blank': 'True'}),
-            'hosts': ('django.db.models.fields.related.ManyToManyField', [], {'symmetrical': 'False', 'to': u"orm['triWeb.IP']", 'null': 'True', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '50'}),
             'service_list': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['triWeb.services']", 'symmetrical': 'False'})

@@ -8,19 +8,31 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Adding M2M table for field custom_services on 'IP'
-        m2m_table_name = db.shorten_name(u'triWeb_ip_custom_services')
-        db.create_table(m2m_table_name, (
-            ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True)),
-            ('ip', models.ForeignKey(orm[u'triWeb.ip'], null=False)),
-            ('services', models.ForeignKey(orm[u'triWeb.services'], null=False))
-        ))
-        db.create_unique(m2m_table_name, ['ip_id', 'services_id'])
+        # Deleting field 'IP.alert_limit'
+        db.delete_column(u'triWeb_ip', 'alert_limit')
+
+        # Deleting field 'IP.asset_collection'
+        db.delete_column(u'triWeb_ip', 'asset_collection')
+
+        # Deleting field 'IP.snmp_alert_limit'
+        db.delete_column(u'triWeb_ip', 'snmp_alert_limit')
 
 
     def backwards(self, orm):
-        # Removing M2M table for field custom_services on 'IP'
-        db.delete_table(db.shorten_name(u'triWeb_ip_custom_services'))
+        # Adding field 'IP.alert_limit'
+        db.add_column(u'triWeb_ip', 'alert_limit',
+                      self.gf('django.db.models.fields.IntegerField')(default=5),
+                      keep_default=False)
+
+        # Adding field 'IP.asset_collection'
+        db.add_column(u'triWeb_ip', 'asset_collection',
+                      self.gf('django.db.models.fields.BooleanField')(default=True),
+                      keep_default=False)
+
+        # Adding field 'IP.snmp_alert_limit'
+        db.add_column(u'triWeb_ip', 'snmp_alert_limit',
+                      self.gf('django.db.models.fields.IntegerField')(default=5),
+                      keep_default=False)
 
 
     models = {
@@ -110,10 +122,6 @@ class Migration(SchemaMigration):
         },
         u'triWeb.ip': {
             'Meta': {'object_name': 'IP'},
-            'alert_limit': ('django.db.models.fields.IntegerField', [], {'default': '5'}),
-            'asset_collection': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
-            'cpu_idle_critical': ('django.db.models.fields.IntegerField', [], {'default': '0', 'blank': 'True'}),
-            'cpu_idle_warning': ('django.db.models.fields.IntegerField', [], {'default': '0', 'blank': 'True'}),
             'custom_services': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['triWeb.services']", 'symmetrical': 'False'}),
             'display_name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '50'}),
             'group': ('django.db.models.fields.related.ManyToManyField', [], {'symmetrical': 'False', 'to': u"orm['triWeb.Group']", 'null': 'True', 'blank': 'True'}),
@@ -121,11 +129,8 @@ class Migration(SchemaMigration):
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'idc': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['triWeb.Idc']", 'null': 'True', 'blank': 'True'}),
             'ip': ('django.db.models.fields.IPAddressField', [], {'unique': 'True', 'max_length': '15'}),
-            'mem_usage_critical': ('django.db.models.fields.IntegerField', [], {'default': '0', 'blank': 'True'}),
-            'mem_usage_warning': ('django.db.models.fields.IntegerField', [], {'default': '0', 'blank': 'True'}),
             'os': ('django.db.models.fields.CharField', [], {'default': "'linux'", 'max_length': '20'}),
             'port': ('django.db.models.fields.IntegerField', [], {'default': "'22'"}),
-            'snmp_alert_limit': ('django.db.models.fields.IntegerField', [], {'default': '5'}),
             'snmp_auth_protocol': ('django.db.models.fields.CharField', [], {'default': "'MD5'", 'max_length': '50'}),
             'snmp_community_name': ('django.db.models.fields.CharField', [], {'default': "'public'", 'max_length': '50'}),
             'snmp_on': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
@@ -134,8 +139,6 @@ class Migration(SchemaMigration):
             'snmp_user': ('django.db.models.fields.CharField', [], {'default': "'triaquae_snmp'", 'max_length': '50'}),
             'snmp_version': ('django.db.models.fields.CharField', [], {'default': "'2c'", 'max_length': '10'}),
             'status_monitor_on': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
-            'system_load_critical': ('django.db.models.fields.IntegerField', [], {'default': '0', 'blank': 'True'}),
-            'system_load_warning': ('django.db.models.fields.IntegerField', [], {'default': '0', 'blank': 'True'}),
             'template_list': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['triWeb.templates']", 'symmetrical': 'False'})
         },
         u'triWeb.items': {

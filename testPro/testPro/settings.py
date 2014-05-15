@@ -27,6 +27,18 @@ TEMPLATE_DEBUG = True
 ALLOWED_HOSTS = []
 
 
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
+        'NAME': 'triaquae4',
+        # The following settings are not used with sqlite3:
+        'USER': 'root',
+        'PASSWORD': 'alex3714',
+        'HOST': '',
+        'PORT': 3306,
+    }
+}
+
 # Application definition
 
 INSTALLED_APPS = (
@@ -57,12 +69,15 @@ WSGI_APPLICATION = 'testPro.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/1.6/ref/settings/#databases
 
+"""
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
 }
+"""
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.6/topics/i18n/

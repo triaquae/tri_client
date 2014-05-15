@@ -4,7 +4,7 @@ import json,os,sys,threading
 from conf import templates, hosts
 from get_monitor_dic import get_monitor_host_list
 import db_connector
-from TriAquae.hosts.models import Group,IP
+from triWeb.models import Group,IP
 import monitor_data_handle as alert_handle
 import time,pickle,subprocess
 import redis_connector 

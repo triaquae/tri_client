@@ -4,7 +4,7 @@ import os,commands,stat
 from hashlib import md5
 import db_connector,key_gen
 import redis_connector 
-from TriAquae.hosts.models import IP
+from triWeb.models import IP
 recv_dir = 'recv/'
 
 #server_address = '192.168.2.248'
@@ -46,12 +46,16 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
 				print 'file transfer done==='
 				break
                         return_data += data
-		#print '\033[34;1m=====\033[0m',return_data
                 return return_data
         # self.request is the TCP socket connected to the client
 	def RSA_verifyication(sock):
-		RSA_signal, encrypted_data,random_num_from_client = json.loads(sock.recv(1024))
-		#print RSA_signal, encrypted_data,random_num_from_client
+		raw_rsa_data = sock.recv(396)  #fixed key length
+		#print '-------->',raw_rsa_data, len(raw_rsa_data)
+		try:
+			RSA_signal, encrypted_data,random_num_from_client = json.loads(  raw_rsa_data)
+		except ValueError:
+			print '\033[41;1mWrong data format from %s,close connection!\033[0m' %  self.client_address[0]
+			return 0	
 		if RSA_signal == 'RSA_KEY_Virification':
 			#encrypted_data = "iwTgqSzMcNOHauWdXXc+rgfbWt6IUXmdIXUqNUJ2U7FZKISc2WR2yAJrq7ldR3TxQEppWgIo/Ycj\nA5gl0fGDVvAEvV02CKZ3gZEI6fWpiMoy6ucpFFDyVAWUrpiXdUOVKxOsDXGgeOObgvd1jsEQCo4i\ncLCBTWDn0HfyQic+Btm1txXc7Nw9jknUCZx6Y8I+6JaIYjNRLwJ6kSMwpTsfP37lvrQfdUkWu3bX\npV9z3hHOQ6+A8rlK7fmL1zk75TXDCmnrLY88UIv6BL4zPXtim4BCD7PlOvDG296br0VIcvF5uhqr\ntj7zOcbA81P1JBFm1nMJqLv+SB5sit923v05XA==\n"
 			
@@ -64,7 +68,6 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
 				return 0
 		else:
 			return 0
-		#print RSA_singal, encrypted_data 	
 	if RSA_verifyication(self.request) == 0: #didn't pass the RSA virification
 
 		#if self.client_address[0] != server_address:
@@ -115,7 +118,9 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
 			self.request.sendall(hardware_data )
 		elif self.data == 'ReportMonitorStatus':
 			self.request.send('ReadyToReceiveStatusData')	
-			status_data = json.loads(self.request.recv(8096) )	
+			raw_data_from_client = self.request.recv(8096)
+			print '+++', raw_data_from_client
+			status_data = json.loads( raw_data_from_client )	
 			client_hostname =  status_data['hostname']
 			for name,service_status in status_data.items():
 				#print name,service_status
@@ -124,8 +129,9 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
 			print "************get conn from %s------\n" %client_hostname
 			# push status data into JSON file
 			if client_hostname == 'localhost':
+				#print redis_connector.r.keys()
 				redis_connector.r['TriAquae_monitor_status'] = json.dumps(monitor_dic)
-				redis_connector.r.save()
+				#redis_connector.r.save()
 
 				print 'status inserted into JSON file'
 				

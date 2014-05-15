@@ -11,7 +11,7 @@ class BaseTemplate:
 class LinuxGeneralServices(BaseTemplate):
 	name = 'Linux General Services'
 	groups = ['TestGroup',]
-	hosts = ['localhost','www.baidu.com']
+	#hosts = ['localhost','www.baidu.com']
 	services = {
 		'cpu': linux.cpu(),
 		'memory':  linux.memory(),

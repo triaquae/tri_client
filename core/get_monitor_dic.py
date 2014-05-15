@@ -2,10 +2,11 @@ import global_setting
 import json,os,sys,threading
 from conf import templates, hosts
 import db_connector
-from TriAquae.hosts.models import Group,IP
-
+from triWeb.models import Group,IP
+from django.core.exceptions import ObjectDoesNotExist
 def get_monitor_host_list():
-        host_dic = {}
+  host_dic = {}
+  try: 
         for n,p in  enumerate(templates.enabled_templates):
                 if p.groups is not None:
                         for g in p.groups:
@@ -25,6 +26,7 @@ def get_monitor_host_list():
                                         if n not in host_dic[host]: #will not add the duplicate policy name
                                                 host_dic[host].append(n)
         return host_dic
-
+  except  ObjectDoesNotExist,err:
+	print 'get_monitor_dic.py:',err
 
 #print get_monitor_host_list()

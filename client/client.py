@@ -3,10 +3,10 @@ import conf,json,threading
 import socket,time,sys
 import scripts,key_gen,random_pass
 import commands
-HOST = '192.168.71.134'    # The remote host
+HOST = '10.168.0.218'    # The remote host
 #HOST = '192.168.71.130'    # The remote host
 PORT = 9998              # The same port as used by the server
-hostname = 'localhost'
+hostname = 'testWin'
 status_dic = {'services': {}}
 last_check_dic = {}
 interval_dic = {}
@@ -56,18 +56,28 @@ def monitor_api(m_dic, m_interval):
 	RSA_signal,random_num = 'RSA_KEY_Virification', str(random_pass.randomPassword(10))
 	encrypted_data = key_gen.RSA_key.encrypt_RSA(key_gen.public_file,random_num)
 	s.sendall(json.dumps( (RSA_signal,encrypted_data, random_num) )) 
-	print '\033[34;1m sending status to Monitor server .... \033[0m' 
-	s.send('ReportMonitorStatus')
+	print '\033[34;1m sending status to Monitor server .... \033[0m'
+
+	'''
+	modified by ztp
+	''' 
+	jsondumps = json.dumps(status_dic)
+	sendSignalAndSize = 'ReportMonitorStatus'+'|'+str(len(jsondumps))
+	s.send(sendSignalAndSize)
 	transferSignal = s.recv(1024)
 	if transferSignal == 'ReadyToReceiveStatusData':
-		s.sendall(json.dumps(status_dic))
+		s.sendall(json.dumps(status_dic))      
 	s.close()
+	#with open('d:\info_test.json', 'wb') as f:
+	#	json.dump(status_dic, f)
 	print "wait for the next round..."
 	
 
 # Trigger the monitor api
 while True:
+	print interval_dic
 	for interval,monitor_dic in interval_dic.items():
+		print monitor_dic
 		time_diff = time.time() - monitor_dic['last_check']  
 		if time_diff >= interval:
 			#print time_diff,'going to monitor %s ' % monitor_dic['name']

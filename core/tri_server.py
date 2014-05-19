@@ -5,6 +5,7 @@ from hashlib import md5
 import db_connector,key_gen
 import redis_connector 
 from triWeb.models import IP
+import time
 recv_dir = 'recv/'
 
 #server_address = '192.168.2.248'
@@ -47,6 +48,30 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
 				break
                         return_data += data
                 return return_data
+        def receive_data_by_size(sock,size):
+                return_data = ''
+                filename = time.time() 
+                fp = open('/tmp/'+str(filename),'wb')
+                restsize = size
+                print "recving..."
+                while 1:
+                       if(restsize > 8096):
+                               data = sock.recv(8096)
+                               return_data += data
+                       else:
+                               data = sock.recv(restsize)
+                               return_data += data
+                       if restsize ==0:
+                               break
+                       fp.write(data)
+                       restsize = restsize - len(data)
+		       print restsize
+                       #if restsize <= 0:
+                       #       break
+                fp.close()
+		print "receving is done...............",restsize                    
+
+                return return_data
         # self.request is the TCP socket connected to the client
 	def RSA_verifyication(sock):
 		raw_rsa_data = sock.recv(396)  #fixed key length
@@ -80,6 +105,7 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
 			print "Alert::malicious attack from:" , self.client_address[0]
 	else:
 		self.data = self.request.recv(1024).strip()
+                print "{}self.data",self.data
 		print "{} wrote:",self.client_address[0]
 		if self.data.startswith('CMD_Excution|'):
 			cmd= self.data.split('CMD_Excution|')[1]
@@ -116,10 +142,22 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
 			import Hardware_Collect_Script
 			hardware_data = Hardware_Collect_Script.collectAsset() 
 			self.request.sendall(hardware_data )
-		elif self.data == 'ReportMonitorStatus':
+		#elif self.data == 'ReportMonitorStatus':
+                elif self.data.find('ReportMonitorStatus') > -1:
 			self.request.send('ReadyToReceiveStatusData')	
-			raw_data_from_client = self.request.recv(8096)
-			print '+++', raw_data_from_client
+			#raw_data_from_client = self.request.recv(8096)
+			#print '+++', raw_data_from_client
+                        #raw_data_from_client  = self.request.recv(8096)
+                        signal_size = self.data.split("|")
+                        raw_data_from_client_size = int(signal_size[1])
+                        if raw_data_from_client_size <= 8096:
+                            raw_data_from_client = self.request.recv(8096)
+                        #else:
+                         #   raw_data_from_client = self.request.recv(raw_data_from_client_size)
+                        else:
+                            raw_data_from_client = receive_data_by_size(self.request,raw_data_from_client_size)
+			#print '+++', raw_data_from_client
+                        #raw_data_from_client  = self.request.recv(8096)
 			status_data = json.loads( raw_data_from_client )	
 			client_hostname =  status_data['hostname']
 			for name,service_status in status_data.items():

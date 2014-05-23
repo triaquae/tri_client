@@ -89,6 +89,7 @@ class IP(models.Model):
     ip = models.IPAddressField(unique=True)
     idc = models.ForeignKey(Idc, null=True, blank=True)
     group = models.ManyToManyField(Group, null=True, blank=True)
+    template_list = models.ManyToManyField('templates')
     port = models.IntegerField(default='22')
     os = models.CharField(max_length=20, default='linux', verbose_name='Operating System')
 
@@ -112,7 +113,7 @@ class IP(models.Model):
     mem_usage_warning = models.IntegerField(default=0,blank=True, verbose_name="memoryUsage% >")
     mem_usage_critical = models.IntegerField(default=0,blank=True)
     def __unicode__(self):
-        return self.ip
+        return self.hostname
 
 class RemoteUser(models.Model):
     name = models.CharField(max_length=50, unique=True)
@@ -188,4 +189,84 @@ class QuickLink(models.Model):
 	link_name = models.CharField(max_length=50)
 	url = models.URLField()
 	COLOR_CHOICES = (('btn-danger', 'red'),('btn-warning', 'yellow'),('btn-success','green'), ('btn-primary','dark-blue'),('btn-info','blue'))
-        color = models.CharField(max_length=100, choices=COLOR_CHOICES)
+    	color = models.CharField(max_length=100, choices=COLOR_CHOICES)
+
+
+
+class templates(models.Model):  #monitor template
+    name = models.CharField(max_length=50, unique=True)
+    service_list =  models.ManyToManyField('services')
+    graph_list = models.ManyToManyField('graphs',blank=True,null=True)
+    groups = models.ManyToManyField('Group',blank=True,null=True)
+    
+    def __unicode__(self):
+        return self.name
+
+class services(models.Model):  #services list
+    name = models.CharField(max_length=50,unique=True)
+    item_list = models.ManyToManyField('items')
+    check_interval = models.IntegerField(default=300)
+    #flexible_intervals = 
+    def __unicode__(self):
+        return self.name    
+
+class items(models.Model): # monitor item
+    name = models.CharField(max_length=50, unique=True)
+    monitor_type = models.CharField(max_length=50)
+    key = models.CharField(max_length=50)
+    data_type_option = (('float','Float'),('string','String'),('integer', 'Integer') ) 
+    data_type = models.CharField(max_length=50, choices=data_type_option)
+    unit = models.CharField(max_length=30,default='%')
+    enabled = models.BooleanField(default=True)
+    def __unicode__(self):
+        return self.name
+
+class triggers(models.Model): 
+    name = models.CharField(max_length=50,unique=True)
+    expression = models.CharField(max_length=150)
+    description = models.CharField(max_length=100)
+    serverity_list = (('information','Information'),
+                       ( 'warning' ,'Warning'),
+                       ('critical', 'Critical'),
+                       ('urgent','Urgent'),
+                       ('disaster','Disaster') )
+    serverity = models.CharField(max_length=30, choices=serverity_list)
+    #dependencies 
+    def __unicode__(self):
+        return self.name
+
+class graphs(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+    datasets = models.ManyToManyField('items')
+    graph_type = models.CharField(max_length=50)
+    def __unicode__(self):
+        return self.name
+    
+class actions(models.Model):
+    name = models.CharField(max_length=100,unique=True)
+    condition_list = models.ManyToManyField('conditions')
+    operation_list = models.ManyToManyField('operations')
+    subject = models.CharField(max_length=100)
+    message = models.CharField(max_length=250)
+    recovery_notice = models.BooleanField(default=True)
+    recovery_subject = models.CharField(max_length=100)
+    recovery_message = models.CharField(max_length=250)
+    enabled = models.BooleanField(default=True)
+    def __unicode__(self):
+        return self.name
+
+class conditions(models.Model):
+    name = models.CharField(max_length=100,unique=True)
+    condition_type = models.CharField(max_length=100)
+    operator = models.CharField(max_length=30)
+    value = models.CharField(max_length=250)
+    def __unicode__(self):
+        return self.name
+
+class operations(models.Model):
+    send_to_users = models.ManyToManyField('TriaquaeUser')
+    send_to_groups = models.ManyToManyField('Group')
+    notifier_type = (('email','Email'),('sms','SMS'))
+    send_via = models.CharField(max_length=30,choices=notifier_type)
+    notice_times = models.IntegerField(default=5)
+    notice_interval = models.IntegerField(default=300, verbose_name='notice_interval(sec)')

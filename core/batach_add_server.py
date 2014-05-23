@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 import db_connector
-from TriAquae.hosts.models import Group,IP
+from triWeb.models import Group,IP
 g_name = Group.objects.get(name ='BJ')
-n = 760 
-for i in range(1,254):
-	addr = '192.168.97.%s' % i
+n = 2 
+for i in range(2,25):
+	addr = '10.168.0.%s' % i
 	add_server = IP.objects.create(
 
 	ip = addr, 

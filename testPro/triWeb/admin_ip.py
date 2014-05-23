@@ -49,11 +49,11 @@ class GroupAdmin(admin.ModelAdmin):
 
 class IpAdmin(admin.ModelAdmin):
     search_fields = ('ip','hostname','os')
-    fields = ('hostname', 'ip', 'idc','group',  'port', 'os','status_monitor_on', 'snmp_on','asset_collection','alert_limit','snmp_alert_limit', 'snmp_version', 'snmp_security_level', 'snmp_community_name','snmp_auth_protocol', 'snmp_user', 'snmp_pass' ,'system_load_warning', 'system_load_critical', 'cpu_idle_warning', 'cpu_idle_critical', 'mem_usage_warning', 'mem_usage_critical')
-    list_display = ('ip', 'hostname',  'idc',  'port', 'os')
+    fields = ('hostname', 'ip', 'idc','group',  'template_list','port', 'os','status_monitor_on', 'snmp_on','asset_collection','alert_limit','snmp_alert_limit', 'snmp_version', 'snmp_security_level', 'snmp_community_name','snmp_auth_protocol', 'snmp_user', 'snmp_pass' ,'system_load_warning', 'system_load_critical', 'cpu_idle_warning', 'cpu_idle_critical', 'mem_usage_warning', 'mem_usage_critical')
+    list_display = ( 'hostname', 'ip', 'idc',  'port', 'os','status_monitor_on')
     list_editable = ('idc',  'port', 'os')
     #radio_fields = {'idc':admin.VERTICAL}
-    filter_horizontal = ('group',)
+    filter_horizontal = ('group','template_list')
     list_filter = ('idc','os','group')
     #actions = ['add_to_groupmachine', 'add_to_cdnmachine','batch_load']
     def add_to_groupmachine(self, request, queryset):

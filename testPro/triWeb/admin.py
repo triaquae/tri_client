@@ -68,6 +68,8 @@ class StatusAdmin(admin.ModelAdmin):
     search_fields = ('host','host_status')
     list_display = ('host','host_status','ping_status','availability','host_uptime','breakdown_count','up_count','attempt_count')
 
+class TriggersAdmin(admin.ModelAdmin):
+	list_display = ('name', 'serverity')
 class QuickLinkAdmin(admin.ModelAdmin):
 	list_display = ('link_name','url','color')
 #class GroupAdmin(admin.ModelAdmin):
@@ -83,12 +85,12 @@ admin.site.register(ServerStatus,StatusAdmin)
 admin.site.register(templates,TemplatesAdmin)
 admin.site.register(services,ServicesAdmin)
 admin.site.register(items,ItemsAdmin)
-admin.site.register(triggers)
+admin.site.register(triggers,TriggersAdmin)
 admin.site.register(graphs)
 admin.site.register(operations)
 admin.site.register(conditions)
 admin.site.register(actions)
-
+admin.site.register(plugins)
 admin.site.register(OpsLogTemp,LogAdmin)
 admin.site.register(OpsLog,OpsLogAdmin)
 admin.site.register(QuickLink,QuickLinkAdmin)

@@ -9,6 +9,7 @@ for i in range(2,25):
 
 	ip = addr, 
 	hostname = "server_test_%s" %n,
+	display_name = "server_test_%s" %n,
 	port = 22,
 	os =  'Linux test',
 	#group = g_name,

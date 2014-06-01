@@ -48,7 +48,7 @@ class GroupAdmin(admin.ModelAdmin):
 
 class IpAdmin(admin.ModelAdmin):
     search_fields = ('ip','hostname','os')
-    fields = ('hostname', 'ip', 'idc','group', 'belongs_to', 'template_list','custom_services','port', 'os','status_monitor_on', 'snmp_version', 'snmp_security_level', 'snmp_community_name','snmp_auth_protocol', 'snmp_user', 'snmp_pass' )
+    fields = ('hostname','display_name', 'ip', 'idc','group', 'belongs_to', 'template_list','custom_services','port', 'os','status_monitor_on', 'snmp_version', 'snmp_security_level', 'snmp_community_name','snmp_auth_protocol', 'snmp_user', 'snmp_pass' )
     list_display = ( 'hostname', 'ip', 'idc',  'port', 'os','status_monitor_on')
     list_editable = ('idc',  'port', 'os')
     #radio_fields = {'idc':admin.VERTICAL}

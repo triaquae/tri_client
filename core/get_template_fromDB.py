@@ -39,7 +39,8 @@ for k,v in monitor_dic.items():
 	for service in v['template'].service_list.values(): #get will be monitored service list from this template
 		s_obj = services.objects.get(name = service['name'])
 		print '\033[35;1m%s \033[0m' %s_obj.name,s_obj.check_interval 
-		for item_obj in s_obj.item_list.values():print item_obj
+		for item_obj in s_obj.item_list.values():
+			print item_obj
 		print 'host list:  ',monitor_host_list
 
 

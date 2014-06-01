@@ -90,6 +90,7 @@ class IP(models.Model):
     hostname=models.CharField(max_length=50, unique=True)
     display_name = models.CharField(max_length=50, unique = True)
     ip = models.IPAddressField(unique=True)
+    belongs_to = models.ForeignKey('trunk_servers', null=True,blank=True)
     idc = models.ForeignKey(Idc, null=True, blank=True)
     group = models.ManyToManyField(Group, null=True, blank=True)
     template_list = models.ManyToManyField('templates')
@@ -188,6 +189,14 @@ class QuickLink(models.Model):
 
 
 
+class trunk_servers(models.Model):
+    name = models.CharField(max_length=50,unique=True)
+    description = models.CharField(max_length=150,blank=True)
+    ip_address = models.IPAddressField()
+    port = models.IntegerField(default = 9998)
+    def __unicode__(self):
+        return self.name
+
 class templates(models.Model):  #monitor template
     name = models.CharField(max_length=50, unique=True)
     service_list =  models.ManyToManyField('services')
@@ -199,6 +208,9 @@ class templates(models.Model):  #monitor template
 
 class services(models.Model):  #services list
     name = models.CharField(max_length=50,unique=True)
+    monitor_type_list = (('agent','TriAgent'),('snmp','SNMP'),('wget','Wget'))
+    monitor_type = models.CharField(max_length=50, choices=monitor_type_list)
+    plugin = models.ForeignKey('plugins') 
     item_list = models.ManyToManyField('items')
     trigger_list = models.ManyToManyField('triggers',blank=True)
     check_interval = models.IntegerField(default=300)
@@ -208,12 +220,9 @@ class services(models.Model):  #services list
 
 class items(models.Model): # monitor item
     name = models.CharField(max_length=50, unique=True)
-    monitor_type_list = (('agent','TriAgent'),('snmp','SNMP'),('wget','Wget'))
-    monitor_type = models.CharField(max_length=50, choices=monitor_type_list)
     key = models.CharField(max_length=50)
     data_type_option = (('float','Float'),('string','String'),('integer', 'Integer') ) 
     data_type = models.CharField(max_length=50, choices=data_type_option)
-    plugin = models.ForeignKey('plugins') 
     unit = models.CharField(max_length=30,default='%')
     enabled = models.BooleanField(default=True)
     def __unicode__(self):

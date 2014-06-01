@@ -53,10 +53,10 @@ class TemplatesAdmin(admin.ModelAdmin):
     #filter_horizontal = ('service_list','groups','hosts','graph_list')
 
 class ServicesAdmin(admin.ModelAdmin):
-    list_display = ('name', 'check_interval')
+    list_display = ('name', 'monitor_type','check_interval')
     filter_horizontal = ('item_list','trigger_list')
 class ItemsAdmin(admin.ModelAdmin):
-    list_display = ('name', 'monitor_type','key','data_type','enabled')
+    list_display = ('name','key','data_type','enabled')
 
 class LogAdmin(admin.ModelAdmin):
     list_display = ('user','ip','event_type','cmd','event_log','result','track_mark')
@@ -91,6 +91,7 @@ admin.site.register(operations)
 admin.site.register(conditions)
 admin.site.register(actions)
 admin.site.register(plugins)
+admin.site.register(trunk_servers)
 admin.site.register(OpsLogTemp,LogAdmin)
 admin.site.register(OpsLog,OpsLogAdmin)
 admin.site.register(QuickLink,QuickLinkAdmin)

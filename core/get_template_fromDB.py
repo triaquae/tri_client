@@ -1,10 +1,11 @@
 
+#coding:utf-8
 import db_connector 
 
 from triWeb.models import *
 
 monitor_dic = {}
-customize_list = []
+customize_monitor_list = []
 
 for t in templates.objects.all():
 	monitor_dic[t.name] = {
@@ -25,16 +26,26 @@ for h in IP.objects.filter(status_monitor_on=True):
 	for t in h.template_list.values(): 
 		#print h,t
 		monitor_dic[ t['name']]['host_list'].append(h)  
+	if  len(h.custom_services.values()) >0:
+		customize_monitor_list.append(h)
+
+
 
 
 for k,v in monitor_dic.items():
-	print '\033[42;1m%s \033[0m' %k, v['template'].service_list.values()
-	services_obj = []
-	for service in v['template'].service_list.values():
-		print services.objects.get(name = service['name'])
-		for host in  set(v['host_list']):
-		  if len(host.custom_services.values()) >0 and host.hostname not in customize_list:
-			customize_list.append( host.hostname )
-		  print host.hostname  #,host.custom_services.values()
+	print '\nTemplate:   \033[42;1m%s \033[0m' %k  #, v['template'].service_list.values()
+	#services_obj = []
+	monitor_host_list = set(v['host_list'])
+	for service in v['template'].service_list.values(): #get will be monitored service list from this template
+		s_obj = services.objects.get(name = service['name'])
+		print '\033[35;1m%s \033[0m' %s_obj.name,s_obj.check_interval,monitor_host_list
 
-print customize_list	
+
+#for customized list 
+print '\n-----------customize_monitor_list-------------'
+for host in  customize_monitor_list: #check if each host has customized monitor list
+  
+  print host.hostname,'\tcustomized service:', host.custom_services.values()
+
+  
+

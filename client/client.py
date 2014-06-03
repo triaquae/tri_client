@@ -10,7 +10,7 @@ hostname = 'localhost'
 status_dic = {'services': {}}
 last_check_dic = {}
 interval_dic = {}
-#####
+##########
 conf.BASE_DIR
 
 #get all the services' monitor inverval and put it into interval_dic

@@ -143,7 +143,7 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
 			hardware_data = Hardware_Collect_Script.collectAsset() 
 			self.request.sendall(hardware_data )
 		#elif self.data == 'ReportMonitorStatus':
-                elif self.data.find('ReportMonitorStatus') > -1:
+                elif self.data.startswith('ReportMonitorStatus'):
 			self.request.send('ReadyToReceiveStatusData')	
 			#raw_data_from_client = self.request.recv(8096)
 			#print '+++', raw_data_from_client
@@ -166,7 +166,7 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
 				monitor_dic[ client_hostname][name] =  service_status
 			print "************get conn from %s------\n" %client_hostname
 			# push status data into JSON file
-			if client_hostname == 'localhost':
+			if client_hostname == 'localhost': 
 				#print redis_connector.r.keys()
 				redis_connector.r['TriAquae_monitor_status'] = json.dumps(monitor_dic)
 				#redis_connector.r.save()

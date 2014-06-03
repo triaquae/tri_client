@@ -10,7 +10,7 @@ class BaseTemplate:
 
 class LinuxGeneralServices(BaseTemplate):
 	name = 'Linux General Services'
-	groups = ['TestGroup',]
+	groups = ['BJ',]
 	#hosts = ['localhost','www.baidu.com']
 	services = {
 		'cpu': linux.cpu(),

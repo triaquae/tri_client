@@ -6,11 +6,11 @@ import commands
 HOST = '10.168.0.218'    # The remote host
 #HOST = '192.168.71.130'    # The remote host
 PORT = 9998              # The same port as used by the server
-hostname = 'testWin'
+hostname = 'localhost'
 status_dic = {'services': {}}
 last_check_dic = {}
 interval_dic = {}
-
+#####
 conf.BASE_DIR
 
 #get all the services' monitor inverval and put it into interval_dic

@@ -26,3 +26,55 @@
 [3614] 15 May 14:29:12.721 * Saving the final RDB snapshot before exiting.
 [3614] 15 May 14:29:12.911 * DB saved on disk
 [3614] 15 May 14:29:12.911 # Redis is now ready to exit, bye bye...
+  File "/usr/local/src/redis-2.8.8/src/redis-server", line 1
+    ELF
+    ^
+SyntaxError: invalid syntax
+[19152] 03 Jun 18:58:42.128 # Warning: no config file specified, using the default config. In order to specify a config file use /usr/local/src/redis-2.8.8/src/redis-server /path/to/redis.conf
+[19152] 03 Jun 18:58:42.129 * Increased maximum number of open files to 10032 (it was originally set to 1024).
+                _._                                                  
+           _.-``__ ''-._                                             
+      _.-``    `.  `_.  ''-._           Redis 2.8.8 (00000000/0) 64 bit
+  .-`` .-```.  ```\/    _.,_ ''-._                                   
+ (    '      ,       .-`  | `,    )     Running in stand alone mode
+ |`-._`-...-` __...-.``-._|'` _.-'|     Port: 6379
+ |    `-._   `._    /     _.-'    |     PID: 19152
+  `-._    `-._  `-./  _.-'    _.-'                                   
+ |`-._`-._    `-.__.-'    _.-'_.-'|                                  
+ |    `-._`-._        _.-'_.-'    |           http://redis.io        
+  `-._    `-._`-.__.-'_.-'    _.-'                                   
+ |`-._`-._    `-.__.-'    _.-'_.-'|                                  
+ |    `-._`-._        _.-'_.-'    |                                  
+  `-._    `-._`-.__.-'_.-'    _.-'                                   
+      `-._    `-.__.-'    _.-'                                       
+          `-._        _.-'                                           
+              `-.__.-'                                               
+
+[19152] 03 Jun 18:58:42.130 # Server started, Redis version 2.8.8
+[19152] 03 Jun 18:58:42.130 # WARNING overcommit_memory is set to 0! Background save may fail under low memory condition. To fix this issue add 'vm.overcommit_memory = 1' to /etc/sysctl.conf and then reboot or run the command 'sysctl vm.overcommit_memory=1' for this to take effect.
+[19152] 03 Jun 18:58:42.130 * DB loaded from disk: 0.000 seconds
+[19152] 03 Jun 18:58:42.130 * The server is now ready to accept connections on port 6379
+[19163] 03 Jun 18:58:53.318 # Warning: no config file specified, using the default config. In order to specify a config file use /usr/local/src/redis-2.8.8/src/redis-server /path/to/redis.conf
+[19163] 03 Jun 18:58:53.319 * Increased maximum number of open files to 10032 (it was originally set to 1024).
+                _._                                                  
+           _.-``__ ''-._                                             
+      _.-``    `.  `_.  ''-._           Redis 2.8.8 (00000000/0) 64 bit
+  .-`` .-```.  ```\/    _.,_ ''-._                                   
+ (    '      ,       .-`  | `,    )     Running in stand alone mode
+ |`-._`-...-` __...-.``-._|'` _.-'|     Port: 6379
+ |    `-._   `._    /     _.-'    |     PID: 19163
+  `-._    `-._  `-./  _.-'    _.-'                                   
+ |`-._`-._    `-.__.-'    _.-'_.-'|                                  
+ |    `-._`-._        _.-'_.-'    |           http://redis.io        
+  `-._    `-._`-.__.-'_.-'    _.-'                                   
+ |`-._`-._    `-.__.-'    _.-'_.-'|                                  
+ |    `-._`-._        _.-'_.-'    |                                  
+  `-._    `-._`-.__.-'_.-'    _.-'                                   
+      `-._    `-.__.-'    _.-'                                       
+          `-._        _.-'                                           
+              `-.__.-'                                               
+
+[19163] 03 Jun 18:58:53.319 # Server started, Redis version 2.8.8
+[19163] 03 Jun 18:58:53.320 # WARNING overcommit_memory is set to 0! Background save may fail under low memory condition. To fix this issue add 'vm.overcommit_memory = 1' to /etc/sysctl.conf and then reboot or run the command 'sysctl vm.overcommit_memory=1' for this to take effect.
+[19163] 03 Jun 18:58:53.320 * DB loaded from disk: 0.000 seconds
+[19163] 03 Jun 18:58:53.320 * The server is now ready to accept connections on port 6379

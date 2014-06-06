@@ -1,14 +1,17 @@
 import SocketServer,time
-import pickle,json
+import pickle,json,sys
 import os,commands,stat
 from hashlib import md5
 import db_connector,key_gen
 import redis_connector 
 from triWeb.models import IP
 recv_dir = 'recv/'
-
-#server_address = '192.168.2.248'
 block_list = []
+
+if '--trunk' in sys.argv:
+	print 'running server in as trunk mode!'
+
+
 
 monitor_dic = redis_connector.r.get('TriAquae_monitor_status')
 if monitor_dic is not None:
@@ -120,8 +123,11 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
 			self.request.send('ReadyToReceiveStatusData')	
 			raw_data_from_client = self.request.recv(8096)
 			print '+++', raw_data_from_client
-			status_data = json.loads( raw_data_from_client )	
-			client_hostname =  status_data['hostname']
+			status_data = json.loads( raw_data_from_client )
+			if 	type(status_data) is dict and status_data.get('hostname') is not None:
+				client_hostname =  status_data.get('hostname')
+			else:
+				return 'invalid data from client'
 			for name,service_status in status_data.items():
 				#print name,service_status
 				if type(service_status) is dict:service_status['last_check'] = time.time()
@@ -137,6 +143,8 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
 				
 		elif self.data == 'CollectStatusIntoJsonFile':
 			print 'CollectStatusIntoJsonFile'
+		elif self.data == 'SyncConfigDataToTrunkServer':
+			print 'SyncConfigDataToTrunkServer'
 if __name__ == "__main__":
     HOST, PORT = "0.0.0.0", 9998
 

@@ -24,7 +24,6 @@ def generate_file_md5value(filename):
     else:
         return None
         
-
 def generate_file(filename,data):
     f=file(filename,'w+')
     f.write(json.dumps(data))
@@ -45,18 +44,31 @@ def get_assets_data():
     tmp_dic['net_info']=netinfo.monitor()
     return tmp_dic
 
-#client向proxy代理中发送改变的监控信息
+#找出client向proxy代理中发送改变的监控信息
 def get_assets_data_change(monitor_dic,monitor_new_dic):
     data_change_dic={}
+    for k in monitor_new_dic.keys():
+        if monitor_dic.has_key(k):
+            if k == 'hostname':
+                pass
+            else:
+                for t in monitor_new_dic[k].keys():
+                    if monitor_dic[k].has_key(t):
+                        if monitor_dir[k][t] != monitor_new_dic[k][t]:
+                            data_change_dic[k][t]=monitor_new_dic[k][t]
+                    else:
+                        data_change_dic[k][t]=monitor_new_dic[k][t]
+        else:
+            data_change_dic[k]=monitor_new_dic[k]
+    '''
     for k in monitor_dic.keys():
         for t in monitor_dir[k].keys():
+            #不能这样比较monitor_new_dic中不一定有这些keys
             if monitor_dir[k][t] != monitor_new_dic[k][t]:
                 data_change_dic[k][t]=monitor_new_dic[k][t]
-                
+    '''
     return data_change_dic
 
-    return data_change_dic
-    
 def deal_assets_data_change(client_ip,trunk_monitor_dic,data_change_dic):
     for k in data_change_dic.keys():
         for t in data_change_dic[k].keys():
@@ -65,8 +77,6 @@ def deal_assets_data_change(client_ip,trunk_monitor_dic,data_change_dic):
     #到server端中增加所属的trunk_server,编程一个更大的字典。
     
     return trunk_monitor_dic
-    
-
 #proxy代理向server端发送监控信息。
 #sender.py中使用。
 def send_assets_data():
@@ -75,7 +85,6 @@ def send_assets_data():
         #get ip belongs_to trunk_server
         #
         deal_assets_data_change(ip,trunk_monitor_dic,data_change_dic)
-        
     #server_monitor_dic={'trunk_server':'','ip':'','monitor_services':{}}
     #trunk_monitor_dic={'ip':'','monitor_services':{}}
     #monitor_dic=
@@ -108,7 +117,7 @@ def main():
         
         time.sleep(2)
         i = i-1
-    '''   
+    '''
     monitor_dic=get_assets_data()
     generate_file(cur_dir+'/recv/assets_tmp.log',monitor_dic)
     read_file(cur_dir+'/recv/assets_tmp.log')    

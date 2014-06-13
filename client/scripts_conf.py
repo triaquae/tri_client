@@ -1,6 +1,10 @@
-from scripts import sys_Info,cpu,memory,disk,netinfo
+#from scripts import sys_Info,cpu,memory,disk,netinfo
 #from scripts import *
+from scripts import upCheck
+def upCheck_info():
+	return upCheck.monitor()
 
+"""
 def sys_info():
     return sys_Info.monitor()
     
@@ -15,3 +19,4 @@ def disk_info():
 
 def net_info():
     return netinfo.monitor()
+"""

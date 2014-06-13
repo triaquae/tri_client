@@ -3,7 +3,7 @@
 import db_connector 
 
 from triWeb.models import *
-
+'''
 monitor_dic = {}
 customize_monitor_list = []
 
@@ -30,9 +30,7 @@ for h in IP.objects.filter(status_monitor_on=True):
 		customize_monitor_list.append(h)
 
 
-print monitor_dic
 
-print '*'*50
 
 for k,v in monitor_dic.items():
 	print '\nTemplate:   \033[42;1m%s \033[0m' %k  #, v['template'].service_list.values()
@@ -101,4 +99,3 @@ print get_host_monitor_dic()
 print get_server_monitor_dic()
 
 print get_proxy_monitor_list('10.168.0.218')
-'''

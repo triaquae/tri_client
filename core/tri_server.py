@@ -458,12 +458,8 @@ if __name__ == "__main__":
                 #表示为代理服务,连接主server,得到监控数据
                 get_monitor_dic(S_HOST,S_PORT)
         else:
-            print '--------------------------server starting--------------------'
+       	        print '--------------------------server starting--------------------'
 
-				print 'status inserted into JSON file'
-				
-		elif self.data == 'CollectStatusIntoJsonFile':
-			print 'CollectStatusIntoJsonFile'
 if __name__ == "__main__":
     HOST, PORT = "0.0.0.0", 9998
     # Create the server, binding to localhost on port 9998

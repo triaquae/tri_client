@@ -1,8 +1,10 @@
-from services.models import *
+#from services.models import *
 import os,sys
 
 BASE_DIR=os.path.dirname(os.path.realpath(__file__))
 sys.path.append(BASE_DIR)
+
+"""
 enabled_services = {
 	'services' : (
 		('httpd', apache()),
@@ -13,5 +15,5 @@ enabled_services = {
 		),
 
 }
-
+"""
 #print cpuMonitor().script.monitor()

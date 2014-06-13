@@ -5,15 +5,15 @@ import socket,time,sys
 import scripts,key_gen,random_pass
 import scripts_conf
 import commands
-import pythoncom
-HOST = '10.168.7.105'    # The remote host
+#import pythoncom
+HOST = '10.168.7.101'    # The remote host
 PORT = 9998             # The same port as used by the server
 hostname = 'localhost'
 status_dic = {'services': {}}
 last_check_dic = {}
 interval_dic = {}
 
-from assets_deal import * #处理资产数据是否变化
+#from assets_deal import * #处理资产数据是否变化
 #is_frist_assets_data=[]
 monitor_file_md5=0
 conf.BASE_DIR
@@ -120,6 +120,7 @@ def get_monitor_dic():
             print 'get monitor data'
             req_s.send('get_info')
             #将监控的数据放到文件中,并对文件生成md5密钥
+	    """
             filename='../recv/monitor_date_frist.json'
             generate_file(filename,monitor_data)
             global monitor_file_md5
@@ -135,6 +136,7 @@ def get_monitor_dic():
             with open('d:\interval_data_temp.json', 'wb') as f:
                 json.dump(interval_dic, f) 
             return interval_dic
+	    """
         else:
             print 'rsa error.......'
     except socket.error:
@@ -151,7 +153,7 @@ def multi_job(m_list, m_interval):
         print 'going to run ...',name
         fun=getattr(scripts_conf,name)
         #得到某个监控项的资产信息
-        pythoncom.CoInitialize()
+        #pythoncom.CoInitialize()
         status_dic[name] = fun()
         interval_dic[m_interval]['last_check'] = time.time()
         return interval_dic[m_interval]

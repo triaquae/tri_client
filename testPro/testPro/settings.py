@@ -30,11 +30,11 @@ ALLOWED_HOSTS = []
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': 'triaquae4',
+        'NAME': 'triaquae',
         # The following settings are not used with sqlite3:
         'USER': 'root',
-        'PASSWORD': 'alex3714',
-        'HOST': '',
+        'PASSWORD': '123456',
+        'HOST': '10.168.0.218',
         'PORT': 3306,
     }
 }
@@ -50,7 +50,7 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
 	'app01',
 	'triWeb',
-	'south',
+	#'south',
 )
 
 MIDDLEWARE_CLASSES = (

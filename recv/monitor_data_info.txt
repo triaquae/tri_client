@@ -1,0 +1,1 @@
+{"10.168.7.69": [{"interval": 30, "service": "cpu_info"}, {"interval": 30, "service": "mem_info"}, {"interval": 30, "service": "disk_info"}], "hostname": "5245"}

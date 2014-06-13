@@ -3,7 +3,7 @@
 import db_connector 
 
 from triWeb.models import *
-
+'''
 monitor_dic = {}
 customize_monitor_list = []
 
@@ -48,7 +48,54 @@ for k,v in monitor_dic.items():
 print '\n-----------customize_monitor_list-------------'
 for host in  customize_monitor_list: #check if each host has customized monitor list
   
-  print host.hostname,'\tcustomized service:', host.custom_services.values()
+	print host.hostname,'\tcustomized service:', host.custom_services.values()
 
   
+'''
+#zxb自己设计监控字典。通过service与ip进行查询
 
+def get_host():
+    host_list=[]
+    for h in IP.objects.all():
+	host_list.append(h)
+    return host_list
+    #host_list=IP.objects.all()
+
+#得到主机的监控信息字典
+def get_host_monitor_dic():
+    host_monitor_dic={}
+    for h in get_host():
+	service_list=[]
+	#proxy_ip=h.belongs_to.ip_address
+	for service in h.custom_services.all():
+	    tmp_dic={}
+	    tmp_dic['services']=service.name
+	    tmp_dic['interval']=service.check_interval
+	    service_list.append(tmp_dic)
+	host_monitor_dic[h.ip]=service_list
+    return host_monitor_dic
+
+def get_server_monitor_dic():
+    server_monitor_dic={}
+    host_monitor_dic=get_host_monitor_dic()
+    for tc in trunk_servers.objects.all():
+        host_list=[]
+        hosts_in_this_trunk_server=IP.objects.filter(belongs_to=tc.id)
+        for h in hosts_in_this_trunk_server:
+            tmp_dic={}
+            tmp_dic[h.ip]=host_monitor_dic[h.ip]
+            host_list.append(tmp_dic)
+        server_monitor_dic[tc.ip_address]=host_list
+    return server_monitor_dic
+
+#得到某个代理中具有的监控字典
+def get_proxy_monitor_list(proxy_ip):
+    proxy_monitor_list=[]
+    server_monitor_dic=get_server_monitor_dic()
+    proxy_monitor_list=server_monitor_dic[proxy_ip]
+    return proxy_monitor_list
+
+print get_host_monitor_dic()
+print get_server_monitor_dic()
+
+print get_proxy_monitor_list('10.168.0.218')

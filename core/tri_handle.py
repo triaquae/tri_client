@@ -41,7 +41,7 @@ def data_handler(host_dic):
                             if len(s) !=0:
                                 alert_list.append(s)
                         except KeyError:
-                        alert_list.append({"NoValidServiceData":(service,"service not exist in client datat")} )
+                            alert_list.append({"NoValidServiceData":(service,"service not exist in client datat")} )
                     
         else: #host not in database or not enalbed for monitoring
             print "\033[34;1mnot going to monitor server:\033[0m", h.hostname

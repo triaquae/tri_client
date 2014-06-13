@@ -32,8 +32,11 @@ def generate_file(filename,data):
 def read_file(filename):
     f = open(filename)
     context = f.read() 
-    print context
     f.close()
+    #print context
+    return context
+
+#print type(read_file('../recv/assets45.json'))   
 
 def get_assets_data():
     tmp_dic={}
@@ -48,16 +51,24 @@ def get_assets_data():
 def get_assets_data_change(monitor_dic,monitor_new_dic):
     data_change_dic={}
     for k in monitor_new_dic.keys():
+        tmp={}
         if monitor_dic.has_key(k):
+            if monitor_dic[k] != monitor_new_dic[k]:
+                data_change_dic[k]=monitor_new_dic[k]
+            else:
+                pass
+            '''        
             if k == 'hostname':
                 pass
             else:
+                
                 for t in monitor_new_dic[k].keys():
                     if monitor_dic[k].has_key(t):
-                        if monitor_dir[k][t] != monitor_new_dic[k][t]:
+                        if monitor_dic[k][t] != monitor_new_dic[k][t]:
                             data_change_dic[k][t]=monitor_new_dic[k][t]
                     else:
                         data_change_dic[k][t]=monitor_new_dic[k][t]
+            '''
         else:
             data_change_dic[k]=monitor_new_dic[k]
     '''
@@ -127,8 +138,9 @@ def main():
     print file_md5_1==file_md5_2
     '''
 if __name__=="__main__":
-    main()
-    
+    #main()
+    #print read_file('../recv/assets45'.json')
+    pass
     
     #server_monitor_dic={'trunk_server':'','ip':'','monitor_services':{}}
     #trunk_monitor_dic={'ip':'','monitor_services':{}}
@@ -136,6 +148,3 @@ if __name__=="__main__":
     #在处理监控项时，得到大字典，然后分发给不同的trunk_server端中，变成一个小的
     #处理一个大的字典，然后发送给server端，这里通过增加ip,
     #到server端中增加所属的trunk_server,编程一个更大的字典。
-
-        
-

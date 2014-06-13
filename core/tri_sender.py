@@ -66,8 +66,12 @@ def notice_change_data( hostname ):
         host=belongs_to.ip_address
         port=9999
         send_api(host,port,moniter_data_change_json)
-        
-#任务
+    
+def assets_data_clear(hostname ):
+    #得到该监控项hostname的资产信息，进行清0
+    #这里在redis、服务端、代理端中还会存在该hostname的资产信息？？怎么办？
+    pass
+#任务，线程中的任务出现死循环，与线程外的死循环的区别？？
 def moniter_job( interval ):
     status_dic = {}
     #run single thread...
@@ -78,7 +82,6 @@ def moniter_job( interval ):
             status=get_monitor_status()
             if status:
                 #数据改变进行推送
-                
                 send_api(host,port)
             else:
                 print 'data not change'

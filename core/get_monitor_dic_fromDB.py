@@ -105,7 +105,7 @@ def get_one_host_monitor_dir(host_ip,server_ip):
             monitor_dic['hostname']=host[0].hostname
             return monitor_dic
 
-#print get_one_host_monitor_dir('10.168.7.69','10.168.7.69')
+#print get_one_host_monitor_dir('10.168.7.105','10.168.7.105')
 def test():
     interval_dic={}
     monitor_dic=get_one_host_monitor_dir('10.168.7.35',1)
@@ -146,7 +146,7 @@ def get_proxy_monitor_list(proxy_ip):
                 #proxy_monitor_list.append(tmp_dic)        
             return proxy_monitor_dic
     return 0
-#print get_proxy_monitor_list('10.168.7.69')
+#print get_proxy_monitor_list('10.168.7.105')
 
 #得到某个主机改变的监控项信息
 def get_change_monitor_dic(hostname):

@@ -30,7 +30,7 @@ ALLOWED_HOSTS = []
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': 'assets',
+        'NAME': 'triaquae',
         # The following settings are not used with sqlite3:
         'USER': 'root',
         'PASSWORD': '123456',

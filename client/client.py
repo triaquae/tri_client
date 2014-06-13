@@ -6,15 +6,16 @@ import scripts,key_gen,random_pass
 import scripts_conf
 import commands
 import pythoncom
-HOST = '10.168.7.69'    # The remote host
-PORT = 9999             # The same port as used by the server
+HOST = '10.168.7.105'    # The remote host
+PORT = 9998             # The same port as used by the server
 hostname = 'localhost'
 status_dic = {'services': {}}
 last_check_dic = {}
 interval_dic = {}
 
 from assets_deal import * #处理资产数据是否变化
-is_frist_assets_data=1
+#is_frist_assets_data=[]
+monitor_file_md5=0
 conf.BASE_DIR
 '''
 #get all the services' monitor inverval and put it into interval_dic
@@ -118,13 +119,19 @@ def get_monitor_dic():
                 monitor_data=revc_data_by_size(req_s,int(monitor_data_size))
             print 'get monitor data'
             req_s.send('get_info')
+            #将监控的数据放到文件中,并对文件生成md5密钥
+            filename='../recv/monitor_date_frist.json'
+            generate_file(filename,monitor_data)
+            global monitor_file_md5
+            monitor_file_md5=generate_file_md5value(filename)
+            
             monitor_dic=json.loads(monitor_data)
             #调用得到的监控数据方法
             interval_dic=get_interval_dic(monitor_dic)
             #send message
             req_s.send('get_data')
             #处理监控项数据，并存储到文件中。
-            #{'10.168.7.35': [{'services': u'cpu', 'interval': 30L},,]}
+            #{'10.168.7.40': [{'services': u'cpu', 'interval': 30L},,]}
             with open('d:\interval_data_temp.json', 'wb') as f:
                 json.dump(interval_dic, f) 
             return interval_dic
@@ -186,13 +193,16 @@ def send_data(assets_dic):
     print "wait for the next round..."
     
 def monitor_api(m_dic, m_interval):
-    global is_frist_assets_data
+    #global is_frist_assets_data
     #不同监控时间，得到的监控项资产信息不同，这里用多个文件来保存。？？？
     assets_dic={}
-    if is_frist_assets_data:
+    #if is_frist_assets_data:
+    if not m_dic['last_check']:
+        #是0时，表面是第一次收集该间隔的资产信息
         assets_dic = multi_job(m_dic['name'], m_interval)
         assets_dic['hostname'] = hostname
-        generate_file('../recv/assets_tmp.log',assets_dic)
+        assets_filename='../recv/assets_'+str(m_interval)+'.json'
+        generate_file(assets_filename,assets_dic)
         is_frist_assets_data=0
         print 'frist assets data sending .....'
         print assets_dic
@@ -200,28 +210,41 @@ def monitor_api(m_dic, m_interval):
     else:
         assets_new_dic = multi_job(m_dic['name'], m_interval)
         assets_new_dic['hostname'] = hostname
-        generate_file('../recv/assets_tmp1.log',assets_new_dic)
-        file_md5_old=generate_file_md5value('../recv/assets_tmp.log')
-        file_md5_new=generate_file_md5value('../recv/assets_tmp1.log')
+        assets_newfile='../recv/assets_'+str(m_interval)+'_tmp.json'
+        generate_file(assets_newfile,assets_new_dic)
+        file_md5_old=generate_file_md5value('../recv/assets_'+str(m_interval)+'.json')
+        file_md5_new=generate_file_md5value(assets_newfile)
         #比较文件md5值是否相同,在第二次才开始比较
         #filecmp.cmp(r'e:\1.txt',r'e:\2.txt') 
         #
         if file_md5_old == file_md5_new:
             print 'assets no change........'
         else:
-            assets_change_dic=get_assets_data_change(assets_dic,assets_new_dic)
-            generate_file('../recv/assets_tmp.log',assets_change_dic)
-            assets_dic=assets_new_dic
+            assets_old_dic=read_file('../recv/assets_'+str(m_interval)+'.json')
+            assets_change_dic=get_assets_data_change(json.loads(assets_old_dic),assets_new_dic)
             #只发送改变的监控项
             assets_change_dic['hostname']=hostname
             print 'assets data change sending.....'
+            generate_file('../recv/assets_'+str(m_interval)+'.json',assets_change_dic)
             send_data(assets_change_dic)
         
-        send_data(assets_new_dic)
+        #send_data(assets_new_dic)
 # Trigger the monitor api
 connect_num=4
 while True:
     if len(interval_dic):
+        monitor_file_md5_new=generate_file_md5value('../recv/monitor_date_frist.json')
+        if monitor_file_md5_new != monitor_file_md5:
+            #读取新的监控项数据
+            monitor_data=read_file('../recv/monitor_date_frist.json')
+            monitor_dic=json.loads(monitor_data)
+            #调用得到的新的监控数据方法
+            interval_dic=get_interval_dic(monitor_dic)
+            print 'used new monitor data to collect assets'
+            #是否要发送一个标识，通知服务器端更新资产信息；
+            #还是在服务器端直接将该主机的资产信息清0
+        else:
+            pass
         for interval,monitor_dic in interval_dic.items():
             time_diff = time.time() - monitor_dic['last_check']  
             if time_diff >= interval:

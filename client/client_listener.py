@@ -102,8 +102,9 @@ class CListenTCPHandler(SocketServer.BaseRequestHandler):
                     monitor_data_new=receive_data_by_size(self.request,int(data_size))
                 monitor_dic_new=json.loads(monitor_data_new)
                 print monitor_dic_new
-                filename='../recv/monitor_data_info.txt'
-                with open(filename, 'wb') as f:
+                #filename='../recv/monitor_data_change.json'
+                filename='../recv/monitor_date_frist.json'
+                with open(filename, 'w+') as f:
                     f.write(monitor_data_new)
                 print 'write data into file....'
                 #新的监控数据如何放到监控中

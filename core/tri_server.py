@@ -141,7 +141,7 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
             if self.data_type.startswith('CMD_Excution|'):
                 cmd= self.data_type.split('CMD_Excution|')[1]
                 cmd_status,result = commands.getstatusoutput(cmd)
-                print 'host:%s \tcmd:%s \tresult:%s' %(self.client_address[0], cmd, cmd_status)	
+                print 'host:%s \tcmd:%s \tresult:%s' %(self.client_address[0], cmd, cmd_status)
                 self.request.sendall(pickle.dumps( (cmd_status,result) ))
             elif self.data_type.startswith('RUN_Script|'):
                 recv_data= self.data_type
@@ -183,7 +183,7 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
                         monitor_data=get_monitor_dic_fromDB.get_proxy_monitor_list(client_ip)
                     else:
                         #得到该ip的trunk_servers_id,如果没有数据怎么办,返回monitor_data为0
-                        server_ip='10.168.7.69'
+                        server_ip='10.168.7.105'
                         monitor_data=get_monitor_dic_fromDB.get_one_host_monitor_dir(client_ip,server_ip)
                     #monitor_data=''时，没有得到该ip的监控项
                     while 1:
@@ -265,40 +265,77 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
                     #if client_ip.startswith('10.') or client_ip.startswith('192.168.') or client_ip.startswith('172.[16,31].'):
                     assets_dic={}
                     if signal_flag[2] == 'proxy':
-                        #代理的资产数据字典的处理
-                        proxy_ip=client_ip
-                        for one_assets_data in assets_data[proxy_ip]:
-                            print one_assets_data
+                        #代理的资产数据字典的处理,一个代理
+                        for proxy_ip in assets_data.keys():
+                            if proxy_ip == client_ip:
+                                host_list=[]
+                                for one_assets_data in assets_data[proxy_ip]:
+                                    #首先要获取有几台主机信息
+                                    client_hostname=one_assets_data['hostname']
+                                    host_list.append(client_hostname)
+                                for host in set(host_list):
+                                    assets_dic[client_hostname]={}
+                                
+                                print assets_dic
+                                
+                                for one_assets_data in assets_data[proxy_ip]:
+                                    #这里几条监控数据可能是同一台主机发送的，如何整理
+                                    client_hostname=one_assets_data['hostname']
+                                    #assets_dic.setdefault(client_hostname:{})
+                                    #assets_dic={client_hostname:{}}
+                                    for name,service_status in one_assets_data.items():
+                                        if type(service_status) is dict:
+                                            #说明name!=hostname的其他监控项,添加最后的监控时间
+                                            service_status['last_check']=time.time()
+                                            assets_dic[client_hostname][name]=service_status
+                                            print assets_dic
+                                    #如果hostname相同怎么吧？？？会重复覆盖，放到里面并？？
+                            print assets_dic
+                            
                         #最后处理资产收集到的字典设置
                     else:
-                        #本地的,只是一个
-                        '''
-                        client_hostname = client_ip
-                        assets_dic[client_hostname]=assets_data
-                        '''
+                        #本地的,只是一个资产数据，进行数据基本处理
+                        #{u'cpu_info': {'cpu_basicinfo': [{'cpu_id': u'CPU0', 'NumberOfCores': 2}]}, 'hostname': u'5245','mem_info':{}}
+                        #旧的：{'load': {'status': 1}, 'hostname': 'localhost'}
                         client_hostname = assets_data['hostname']
-                        '''
+                        assets_dic={client_hostname:{}}
+                        #tmp={}
                         for name,service_status in assets_data.items():
-                            print service_status
-                            assets_dic[client_hostname][name] = service_status
-                        '''
-                        assets_dic[client_hostname]=assets_data
+                            #if type(service_status) is dict:
+                            #说明name!=hostname的其他监控项,添加最后的监控时间
+                            if name !='hostname':                                
+                                service_status['last_check']=time.time()
+                                #tmp[name]=service_status
+                                assets_dic[client_hostname][name]=service_status
+                        #assets_dic[client_hostname] = tmp
+                        print assets_dic
                         print "------get conn from %s------\n" %client_hostname
                     # push status data into JSON file
+                    '''
                     if client_hostname == 'localhost':
                         #print redis_connector.r.keys()
                         redis_connector.r['TriAquae_monitor_status'] = json.dumps(assets_dic)
                         #redis_connector.r.save()
                         print 'status inserted into JSON file'
+                    '''
                 else:
                     #proxy deal 向服务端发送数据HOST=?,PORT=? is_client=0
-                    S_HOST='10.168.7.69'
+                    #把接收client端的数据放到redis中
+                    timestemp=time.time()
+                    redis_connector.r[timestemp]=json.dumps(assets_data)
+                    '''
+                    S_HOST='10.168.7.40'
                     S_PORT=9998
                     #何时向服务器端发送资产信息？？接到本地资产信息时发送，所有资产信息都收集到
                     #在之后更新的资产信息时，如何发送？？
                     client_hostname = client_ip
                     proxy_assets_dic={}
                     assets_dic={}
+                    assets_dic[client_hostname]=assets_data
+                    proxy_assets_dic['HOST'].append(assets_dic)
+                    if client_hostname == HOST:
+                        send_data(0,S_HOST,S_PORT,proxy_assets_dic)
+                    '''
                     '''
                     for name,service_status in assets_data.items():
                         #print name,service_status
@@ -307,11 +344,7 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
                         assets_dic[client_hostname][name] =  service_status
                     proxy_assets_dic[HOST].append(assets_dic)
                     '''
-                    assets_dic[client_hostname]=assets_data
-                    proxy_assets_dic[HOST].append(assets_dic)
-                    if client_hostname == HOST:
-                        send_data(0,S_HOST,S_PORT,proxy_assets_dic)
-                    
+
             elif self.data_type == 'CollectStatusIntoJsonFile':
                 print 'CollectStatusIntoJsonFile'
             elif self.data_type == 'datasizetest':
@@ -365,7 +398,7 @@ def get_monitor_dic(host,port):
         print socket.error
     finally:
         req_s.close()
-        
+ 
 def send_data(is2client,host,port,data):
     try:
         send_cs=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
@@ -419,14 +452,14 @@ if __name__ == "__main__":
                 #global is_server
                 #print a
                 is_server=0
-                S_HOST='10.168.7.69'
+                S_HOST='10.168.7.105'
                 S_PORT=9998
                 #表示为代理服务,连接主server,得到监控数据
                 get_monitor_dic(S_HOST,S_PORT)
         else:
             print '--------------------------server starting--------------------'
 
-    HOST, PORT = "0.0.0.0", 9999
+    HOST, PORT = "0.0.0.0", 9998
     # Create the server, binding to localhost on port 9998
     try:
         server = SocketServer.ThreadingTCPServer((HOST, PORT), MyTCPHandler)

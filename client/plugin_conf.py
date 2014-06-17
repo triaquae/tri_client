@@ -1,6 +1,6 @@
 #from scripts import sys_Info,cpu,memory,disk,netinfo
 #from scripts import *
-from scripts import upCheck
+from plugins import upCheck
 def upCheck_info():
 	return upCheck.monitor()
 

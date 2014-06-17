@@ -93,8 +93,8 @@ class IP(models.Model):
     belongs_to = models.ForeignKey('trunk_servers', null=True,blank=True)
     idc = models.ForeignKey(Idc, null=True, blank=True)
     group = models.ManyToManyField(Group, null=True, blank=True)
-    template_list = models.ManyToManyField('templates')
-    custom_services = models.ManyToManyField('services')
+    template_list = models.ManyToManyField('templates',null=True,blank=True)
+    custom_services = models.ManyToManyField('services',null=True,blank=True)
     port = models.IntegerField(default='22')
     os = models.CharField(max_length=20, default='linux', verbose_name='Operating System')
 
@@ -210,7 +210,7 @@ class services(models.Model):  #services list
     name = models.CharField(max_length=50,unique=True)
     monitor_type_list = (('agent','TriAgent'),('snmp','SNMP'),('wget','Wget'))
     monitor_type = models.CharField(max_length=50, choices=monitor_type_list)
-    plugin = models.ForeignKey('plugins') 
+    plugin = models.CharField(max_length=100) 
     item_list = models.ManyToManyField('items')
     trigger_list = models.ManyToManyField('triggers',blank=True)
     check_interval = models.IntegerField(default=300)
@@ -277,9 +277,11 @@ class operations(models.Model):
     send_via = models.CharField(max_length=30,choices=notifier_type)
     notice_times = models.IntegerField(default=5)
     notice_interval = models.IntegerField(default=300, verbose_name='notice_interval(sec)')
+"""
 class plugins(models.Model):
     name = models.CharField(max_length=50)
     description = models.CharField(max_length=150, blank=True)
     plugin_file_name = models.CharField(max_length=150)
     def __unicode__(self):
 	return self.name
+"""

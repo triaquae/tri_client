@@ -49,10 +49,10 @@ class GroupAdmin(admin.ModelAdmin):
 class IpAdmin(admin.ModelAdmin):
     search_fields = ('ip','hostname','os')
     fields = ('hostname','display_name', 'ip', 'idc','group', 'belongs_to', 'template_list','custom_services','port', 'os','status_monitor_on', 'snmp_version', 'snmp_security_level', 'snmp_community_name','snmp_auth_protocol', 'snmp_user', 'snmp_pass' )
-    list_display = ( 'hostname', 'ip', 'idc',  'port', 'os','status_monitor_on','belongs_to')
+    list_display = ( 'display_name','hostname', 'ip', 'idc',  'port', 'os','status_monitor_on','belongs_to')
     list_editable = ('idc',  'port', 'os')
     #radio_fields = {'idc':admin.VERTICAL}
-    filter_horizontal = ('group','template_list')
+    filter_horizontal = ('group','template_list','custom_services')
     list_filter = ('idc','os','group')
     #actions = ['add_to_groupmachine', 'add_to_cdnmachine','batch_load']
     def add_to_groupmachine(self, request, queryset):

@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 #-*- coding:utf-8 -*-
 import SocketServer,socket,time
 import pickle,json
@@ -6,6 +7,7 @@ from hashlib import md5
 import db_connector
 import redis_connector 
 from triWeb.models import IP
+import get_config
 recv_dir = 'recv/'
 
 #server_address = '192.168.2.248'
@@ -15,7 +17,7 @@ import get_monitor_dic_fromDB
 import getopt,sys
 import key_gen,random_pass
 proxy_monitor_dic = {}
-is_server = 1
+is_server = 1 #False
 
 '''
 monitor_dic = redis_connector.r.get('TriAquae_monitor_status')
@@ -181,13 +183,20 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
                     proxy_flag=self.data_type.split("|")
                     if proxy_flag[1] == 'proxy':
                         #处理代理请求
-                        monitor_data=get_monitor_dic_fromDB.get_proxy_monitor_list(client_ip)
+                        monitor_data=get_monitor_dic_fromDB.get_proxy_monitor_list(ip=client_ip)
                     else:
                         #得到该ip的trunk_servers_id,如果没有数据怎么办,返回monitor_data为0
-                        server_ip='10.168.7.105'
-                        monitor_data=get_monitor_dic_fromDB.get_one_host_monitor_dir(client_ip,server_ip)
+                        server_ip='10.168.7.101'
+			monitor_data = get_config.get_config_for_host(ip=client_ip)	
+                        #monitor_data=get_monitor_dic_fromDB.get_one_host_monitor_dir(client_ip,server_ip)
                     #monitor_data=''时，没有得到该ip的监控项
-                    while 1:
+		    if type(monitor_data) is not str:
+			print '---->',monitor_data
+			print len(json.dumps(monitor_data  ))	
+			self.request.send(  str(len(json.dumps(monitor_data))) )
+			time.sleep(0.5)
+			self.request.send( json.dumps(monitor_data)  )
+                    """while 1:
                         if monitor_data:
                             print '---frist send monitor_data!---'
                             self.request.send(str(len(json.dumps(monitor_data))))
@@ -199,12 +208,13 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
                             print 'ip has not monitor data......'
                         #接收客户端是否接收成功！注意这是阻塞等待接收？？？
                         self.data_status=self.request.recv(1024)
-                        print self.data_status
+                        print self.data_status,'*+'*30
                         if self.data_status:
                             #接收成功。
                             break
                         else:
                             pass
+		    """
                 else:
                     #proxy MonitorDataRequest as S  
                     #如果不存在IP的监控项？？client_ip,不能使用 global data_dic
@@ -452,7 +462,7 @@ if __name__ == "__main__":
             if a in ('agent','proxy','trunk_server'):
                 #global is_server
                 #print a
-                is_server=0
+                is_server=0 #True
                 S_HOST='10.168.7.105'
                 S_PORT=9998
                 #表示为代理服务,连接主server,得到监控数据

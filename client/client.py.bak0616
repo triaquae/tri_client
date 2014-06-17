@@ -2,9 +2,10 @@
 # Monitoring  client program
 import conf,json,threading
 import socket,time,sys
-import plugins,key_gen,random_pass
-import plugin_conf
+import scripts,key_gen,random_pass
+import scripts_conf
 import commands
+#import pythoncom
 HOST = '10.168.7.101'    # The remote host
 PORT = 9998             # The same port as used by the server
 hostname = 'localhost'
@@ -12,18 +13,25 @@ status_dic = {'services': {}}
 last_check_dic = {}
 interval_dic = {}
 
+#from assets_deal import * #处理资产数据是否变化
+#is_frist_assets_data=[]
 monitor_file_md5=0
 conf.BASE_DIR
-
-
-
-def pprint(msg,msg_type):
-	if msg_type == 'err':
-		print '\033[31;1mError:%s\033[0m' % msg
-	elif msg_type == 'success':
-		print '\033[32;1m%s\033[0m' % msg
-	else:
-		pass
+'''
+#get all the services' monitor inverval and put it into interval_dic
+for k,v in conf.enabled_services.items():
+    if k == 'services':
+        for i in v:
+            service_name,service = i[0],i[1]
+            if interval_dic.has_key( service.check_interval):
+                interval_dic[ service.check_interval ]['name'][service_name] = service
+            else:
+            
+                interval_dic[ service.check_interval ] = { 'name' :  { service_name : service },
+                                       'last_check': 0 }
+            
+'''
+#how to get interval_dic form db
 #monitor_dic k=ip
 def get_interval_dic(monitor_dic):
     global interval_dic
@@ -44,6 +52,23 @@ def get_interval_dic(monitor_dic):
                     #interval_dic[interval]['name'] = service_name
                 else:
                     interval_dic[interval] = { 'name' : { service_name : service},'last_check': 0 }
+    '''
+    for ip in monitor_dic.keys():
+        for service in monitor_dic[ip]:
+            #monitor_dic[ip] is a service list 
+            for m in service.keys():
+                #得到监控项和时间
+                if m=='interval':
+                    interval=service[m]
+                else:
+                    service_name=service[m]
+            if interval_dic.has_key(interval):
+                interval_dic[interval]['name'][service_name] = service
+                #interval_dic[interval]['name'] = service_name
+            else:
+                interval_dic[interval] = { 'name' : { service_name : service},'last_check': 0 }
+                #interval_dic[interval] = { 'name': service_name ,'last_check': 0 }
+    '''
     return interval_dic
 
 #the frist get monitor data
@@ -83,6 +108,7 @@ def get_monitor_dic():
             req_s.send('MonitorDataRequest'+'|'+'client')
             #接收到的数据大小如何确定
             monitor_data_size=req_s.recv(1024)
+	    print '=============len monitor data:',monitor_data_size
             if int(monitor_data_size) == 0:
                 print 'no monitor_data configured for this host'
                 #req_s.send('get_info')
@@ -91,35 +117,35 @@ def get_monitor_dic():
                 monitor_data=req_s.recv(8096)
             else:
                 monitor_data=revc_data_by_size(req_s,int(monitor_data_size))
-            if len(monitor_data) == int(monitor_data_size): #data received success
-		return json.loads(monitor_data)
-	    else:
-		pprint('Could not retrieve the monitor list for this host,please check with your Monitor server', 'err')
-		sys.exit()
+            print 'Monitor data received from Server:', monitor_data
 
             #将监控的数据放到文件中,并对文件生成md5密钥
+	    """
+            filename='../recv/monitor_date_frist.json'
+            generate_file(filename,monitor_data)
+            global monitor_file_md5
+            monitor_file_md5=generate_file_md5value(filename)
+            
+            monitor_dic=json.loads(monitor_data)
+            #调用得到的监控数据方法
+            interval_dic=get_interval_dic(monitor_dic)
+            #send message
+            req_s.send('get_data')
+            #处理监控项数据，并存储到文件中。
+            #{'10.168.7.40': [{'services': u'cpu', 'interval': 30L},,]}
+            with open('d:\interval_data_temp.json', 'wb') as f:
+                json.dump(interval_dic, f) 
+            return interval_dic
+	    """
         else:
-	    pprint('RSA authentication failed.......','err')
-            sys.exit()
+            print 'rsa error.......'
     except socket.error:
-        pprint(socket.error, 'err')
+        print socket.error
     finally:
         req_s.close()
+        
+print get_monitor_dic()
 
-if __name__ == '__main__':        
-	monitor_list_from_server = get_monitor_dic() #may have duplicate items
-	monitor_list= [] 
-	for service in  monitor_list_from_server:
-		if service not in monitor_list:
-			monitor_list.append(service)
-		else:pass #ignore duplicate service item
-	for i  in monitor_list:
-		print i
-
-
-
-
-"""
 def multi_job(m_list, m_interval):
     status_dic = {}
     #run single thread...
@@ -141,10 +167,6 @@ def multi_job(m_list, m_interval):
             break
         else: 
             time.sleep(1)
-
-
-
-
 
 def send_data(assets_dic):
     try:
@@ -243,4 +265,4 @@ while True:
         else:
             break
     time.sleep(5)
-"""
+

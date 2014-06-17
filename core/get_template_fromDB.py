@@ -47,10 +47,10 @@ for k,v in monitor_dic.items():
 
 
 #for customized list 
-print '\n-----------customize_monitor_list-------------'
+print '\n\033[31;1m-----------customize_monitor_list-------------\033[0m'
 for host in  customize_monitor_list: #check if each host has customized monitor list
   
-	print host.hostname,'\tcustomized service:', host.custom_services.values()
+	print host.display_name,'\tcustomized service:', host.custom_services.values()
 
   
 '''

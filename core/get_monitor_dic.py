@@ -1,9 +1,124 @@
+#!/usr/bin/env python
+# -*- coding:utf-8 -*-
 import global_setting
 import json,os,sys,threading
 from conf import templates, hosts
 import db_connector
-from triWeb.models import Group,IP
+from triWeb.models import *
 from django.core.exceptions import ObjectDoesNotExist
+import get_config
+
+#得到一个空的监控字典
+def get_monitor_empty_dic():
+    monitor_dic={}
+    try:
+        for host_obj in IP.objects.all():
+            monitor_dic[host_obj.hostname]={'hostname':host_obj.hostname,'result_values':{}}
+            #monitor_dic={host_obj.hostname:{'hostname':host_obj.hostname,'result_values':{}}}
+            #得到每个主机的监控服务项
+            service_list=[]
+            template_list=[]
+            for g in host_obj.group.select_related():
+                for t in g.template_list.select_related():
+                    template_list.append( t.name)
+                    
+            for t in host_obj.template_list.select_related():
+                template_list.append( t.name)
+
+            for t_name in set(template_list):
+                t_obj = templates.objects.get( name = t_name)
+                service_list+=t_obj.service_list.values()
+            service_list+=host_obj.custom_services.values()
+            '''
+            tmp_list=[]
+            for service in service_list:
+                tmp_list.append(service['name'])
+            monitor_dic[host_obj.hostname]['service']=tmp_list
+            '''
+            #如果监控服务项为空
+            if len(service_list):
+                for service in service_list:
+                    monitor_dic[host_obj.hostname]['result_values'][service['name']]={}
+            else:
+                pass
+        return monitor_dic
+    except ObjectDoesNotExist,err:
+        print 'not get monitor dic...'
+        
+
+#得到所有主机的监控服务项信息字典
+def get_all_host_monitor_dic():
+    monitor_dic={}
+    try:
+        for host_obj in IP.objects.all():
+            one_monitor_dic=get_config.get_config_for_host(host=host_obj.hostname)
+            monitor_dic[host_obj.hostname]=one_monitor_dic
+        return monitor_dic
+    except ObjectDoesNotExist,err:
+        print 'not get monitor dic...'
+
+def get_all_template_dic():
+    monitor_dic={}
+    custom_monitor_list=[]
+    for t in templates.objects.all():
+        service_list=[]
+        services=t.service_list.all()
+        for service in t.service_list.all():
+            service_list.append(service.name)
+        monitor_dic[t.name] ={
+            'template':t,
+            'host_list':[],
+            'service_list':service_list
+        }
+    for g in Group.objects.all():
+        try:
+            hosts_in_this_group=IP.objects.filter(group__name=g.name)
+        except ObjectDoesNotExist,err:
+            print 'error'
+        for t in g.template_list.values():
+            monitor_dic[t['name']]['host_list'].extend(hosts_in_this_group)
+            
+    for h in IP.objects.filter(status_monitor_on=True):
+        for t in h.template_list.values():
+            monitor_dic[t['name']]['host_list'].append(h)
+        if len(h.custom_services.values()) >0:
+            custom_monitor_list.append(h)
+        
+    return monitor_dic,custom_monitor_list   
+       
+#得到每个服务的监控项等字典
+def get_service_dic(serv=None):
+    service_dic={}
+    if serv is None:
+        for service in services.objects.all():
+            item_list=service.item_list.all()
+            trigger_list=service.trigger_list.all()
+            host_list=service.ip_set.all()
+            #host_list+=get_all_template_dic()[]
+            template_list=service.template_set.all()
+            print host_list
+            service_dic[service['name']]={
+                    'host_list':host_list,
+                    'item_list':item_list,
+                    'trigger_list':trigger_list,
+                    'check_interval':service['check_interval']
+                }
+    else:
+        try:
+            #service=services.objects.get(name=ser_name)
+            item_list=serv.item_list.all()
+            trigger_list=serv.trigger_list.all()
+            service_dic[serv['name']]={
+                    'item_list':item_list,
+                    'trigger_list':trigger_list,
+                    'check_interval':serv['check_interval']
+                }
+        except ObjectDoesNotExist,err:
+            print 'error'
+    return service_dic
+
+    
+    
 def get_monitor_host_list():
     host_dic = {}
     try: 
@@ -28,4 +143,21 @@ def get_monitor_host_list():
     except  ObjectDoesNotExist,err:
         print 'get_monitor_dic.py:',err
 
+        
+if __name__=='__main__':
+    '''
+    host_monitor_dic=get_all_host_monitor_dic()
+    print host_monitor_dic
+    for h_k in host_monitor_dic.keys():
+        one_host_dic=host_monitor_dic[h_k]
+        
+        if len(one_host_dic['service']):
+            for k,service in enumerate(one_host_dic['service']):
+                print k,service['name'],service['check_interval']
+        else:
+            print 'host has no service...'
+    '''
+    a,b=get_all_template_dic()
+    print a,b
+    #print get_monitor_empty_dic()
 #print get_monitor_host_list()

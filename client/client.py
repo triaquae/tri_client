@@ -5,7 +5,9 @@ import socket,time,sys
 import plugins,key_gen,random_pass
 import plugin_conf
 import commands
-HOST = '10.168.7.101'    # The remote host
+import importlib
+from monitor_data_deal import *
+HOST = '10.168.0.218'    # The remote host
 PORT = 9998             # The same port as used by the server
 hostname = 'localhost'
 status_dic = {'services': {}}
@@ -15,35 +17,44 @@ interval_dic = {}
 monitor_file_md5=0
 conf.BASE_DIR
 
-
-
 def pprint(msg,msg_type):
-	if msg_type == 'err':
-		print '\033[31;1mError:%s\033[0m' % msg
-	elif msg_type == 'success':
-		print '\033[32;1m%s\033[0m' % msg
-	else:
-		pass
-#monitor_dic k=ip
-def get_interval_dic(monitor_dic):
-    global interval_dic
-    for ip in monitor_dic.keys():
-        if ip == 'hostname':
-            global hostname
-            hostname=monitor_dic[ip]
+    if sys.platform.startswith("win"):
+        if msg_type == 'err':
+            print 'Error:%s' % msg
+        elif msg_type == 'success':
+            print '%s' % msg
         else:
-            for service in monitor_dic[ip]:
+            pass
+    else:
+        if msg_type == 'err':
+            print '\033[31;1mError:%s\033[0m' % msg
+        elif msg_type == 'success':
+            print '\033[32;1m%s\033[0m' % msg
+        else:
+            pass
+    
+#monitor_dic k=ip
+def get_interval_dic(monitor_data):
+    #[{'monitor_type': u'agent', 'plugin': u'plugin.assets', u'id': 4L, 'check_interval': 5L, 'name': u'window assets'}, ]
+    global interval_dic
+    for k in monitor_data.keys():
+        if k == 'hostname':
+            global hostname
+            hostname=monitor_data[k]
+        else:
+            for service in monitor_data[k]:
                 for m in service.keys():
-                    #得到监控项和时间
-                    if m=='interval':
+                    #得到监控项、时间、插件脚本名
+                    if m=='check_interval':
                         interval=service[m]
-                    else:
+                    elif m=='name':
                         service_name=service[m]
+                    elif m=='plugin':
+                        service_plugin=service[m]
                 if interval_dic.has_key(interval):
-                    interval_dic[interval]['name'][service_name] = service
-                    #interval_dic[interval]['name'] = service_name
+                    interval_dic[interval]['name'][service_name] = service['plugin']
                 else:
-                    interval_dic[interval] = { 'name' : { service_name : service},'last_check': 0 }
+                    interval_dic[interval]={'name':{service_name:service['plugin']},'last_check': 0}
     return interval_dic
 
 #the frist get monitor data
@@ -91,49 +102,49 @@ def get_monitor_dic():
                 monitor_data=req_s.recv(8096)
             else:
                 monitor_data=revc_data_by_size(req_s,int(monitor_data_size))
+                #将监控的数据放到文件中,并对文件生成md5密钥
+                filename='../recv/monitor_date_frist.json'
+                generate_file(filename,monitor_data)
+                global monitor_file_md5
+                monitor_file_md5=generate_file_md5value(filename)
             if len(monitor_data) == int(monitor_data_size): #data received success
-		return json.loads(monitor_data)
-	    else:
-		pprint('Could not retrieve the monitor list for this host,please check with your Monitor server', 'err')
-		sys.exit()
-
+                interval_dic=get_interval_dic(json.loads(monitor_data))
+                return interval_dic
+            else:
+                pprint('Could not retrieve the monitor list for this host,please check with your Monitor server', 'err')
+                sys.exit()
             #将监控的数据放到文件中,并对文件生成md5密钥
         else:
-	    pprint('RSA authentication failed.......','err')
+            pprint('RSA authentication failed.......','err')
             sys.exit()
     except socket.error:
         pprint(socket.error, 'err')
     finally:
         req_s.close()
 
-if __name__ == '__main__':        
-	monitor_list_from_server = get_monitor_dic() #may have duplicate items
-	monitor_list= [] 
-	for service in  monitor_list_from_server:
-		if service not in monitor_list:
-			monitor_list.append(service)
-		else:pass #ignore duplicate service item
-	for i  in monitor_list:
-		print i
-
-
-
-
-"""
-def multi_job(m_list, m_interval):
+def multi_job(m_list, m_interval,frist_invoke=1):
     status_dic = {}
     #run single thread...
-    def run(name,m_api):
+    def run(name,m_api,frist_invoke=1):
         print 'going to run ...',name
+        """
         fun=getattr(scripts_conf,name)
         #得到某个监控项的资产信息
         #pythoncom.CoInitialize()
         status_dic[name] = fun()
+        
+        if sys.platform.startswith("win"):
+            import pythoncom
+            pythoncom.CoInitialize()
+        """
+        plugin_module=importlib.import_module(m_api)
+        status_dic[name]=plugin_module.monitor(frist_invoke)
+        #
         interval_dic[m_interval]['last_check'] = time.time()
         return interval_dic[m_interval]
     result = [] 
     for name, t in m_list.items():
-        result.append(threading.Thread(target=run, args=(name,t)).start())
+        result.append(threading.Thread(target=run, args=(name,t,frist_invoke)).start())
     # get result
     while True:
         if len(status_dic) == len(m_list): #all threads are finished.
@@ -142,11 +153,7 @@ def multi_job(m_list, m_interval):
         else: 
             time.sleep(1)
 
-
-
-
-
-def send_data(assets_dic):
+def send_data(result_dic):
     try:
         client_s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         client_s.connect((HOST, PORT))
@@ -158,12 +165,12 @@ def send_data(assets_dic):
         RSA_status=client_s.recv(1024)
         if RSA_status == 'RSA_OK': 
             #RSA认证通过后，发生数据状态
-            assets_dic_json=json.dumps(assets_dic)
-            sendSignalAndSize = 'AssetsDataCollect'+'|'+str(len(assets_dic_json))+'|'+'client'
+            result_dic_json=json.dumps(result_dic)
+            sendSignalAndSize = 'MonitorResultDataCollect'+'|'+str(len(result_dic_json))+'|'+'client'
             client_s.send(sendSignalAndSize)
             transferSignal = client_s.recv(1024)
             if transferSignal == 'ReadyToReceiveData':
-                client_s.send(json.dumps(assets_dic))
+                client_s.send(result_dic_json)
             else:
                 pass
     except socket.error:
@@ -175,44 +182,60 @@ def send_data(assets_dic):
 def monitor_api(m_dic, m_interval):
     #global is_frist_assets_data
     #不同监控时间，得到的监控项资产信息不同，这里用多个文件来保存。？？？
-    assets_dic={}
+    monitor_dic={}
     #if is_frist_assets_data:
     if not m_dic['last_check']:
+        monitor_data= multi_job(m_dic['name'], m_interval,frist_invoke=1)
+    else:
+        monitor_data= multi_job(m_dic['name'], m_interval,frist_invoke=0)
+    #添加主机名key，外包一层
+    monitor_dic['hostname'] = hostname
+    monitor_dic['result_values']=monitor_data
+    send_data(monitor_dic)
+    
+'''
+    if not m_dic['last_check']:
         #是0时，表面是第一次收集该间隔的资产信息
-        assets_dic = multi_job(m_dic['name'], m_interval)
-        assets_dic['hostname'] = hostname
+        monitor_data= multi_job(m_dic['name'], m_interval)
+        #monitor_data['change_mark']=1
+        #添加主机名key，外包一层
+        monitor_dic['hostname'] = hostname
+        monitor_dic['result_values']=monitor_data
         assets_filename='../recv/assets_'+str(m_interval)+'.json'
-        generate_file(assets_filename,assets_dic)
+        generate_file(assets_filename,monitor_dic)
         is_frist_assets_data=0
         print 'frist assets data sending .....'
-        print assets_dic
-        send_data(assets_dic)
+        print monitor_dic
+        send_data(monitor_dic)
     else:
-        assets_new_dic = multi_job(m_dic['name'], m_interval)
-        assets_new_dic['hostname'] = hostname
+
+        monitor_new_data = multi_job(m_dic['name'], m_interval)
+        monitor_new_dic['hostname'] = hostname
+        monitor_new_dic['result_values'] = monitor_new_data
         assets_newfile='../recv/assets_'+str(m_interval)+'_tmp.json'
-        generate_file(assets_newfile,assets_new_dic)
+        generate_file(assets_newfile,monitor_new_dic)
         file_md5_old=generate_file_md5value('../recv/assets_'+str(m_interval)+'.json')
         file_md5_new=generate_file_md5value(assets_newfile)
         #比较文件md5值是否相同,在第二次才开始比较
         #filecmp.cmp(r'e:\1.txt',r'e:\2.txt') 
         #
+        
         if file_md5_old == file_md5_new:
             print 'assets no change........'
         else:
             assets_old_dic=read_file('../recv/assets_'+str(m_interval)+'.json')
-            assets_change_dic=get_assets_data_change(json.loads(assets_old_dic),assets_new_dic)
+            assets_change_dic=get_monitor_data_change(json.loads(assets_old_dic),assets_new_dic)
             #只发送改变的监控项
             assets_change_dic['hostname']=hostname
             print 'assets data change sending.....'
             generate_file('../recv/assets_'+str(m_interval)+'.json',assets_change_dic)
             send_data(assets_change_dic)
-        
-        #send_data(assets_new_dic)
+'''
 # Trigger the monitor api
 connect_num=4
 while True:
     if len(interval_dic):
+        '''
         monitor_file_md5_new=generate_file_md5value('../recv/monitor_date_frist.json')
         if monitor_file_md5_new != monitor_file_md5:
             #读取新的监控项数据
@@ -225,6 +248,7 @@ while True:
             #还是在服务器端直接将该主机的资产信息清0
         else:
             pass
+        '''
         for interval,monitor_dic in interval_dic.items():
             time_diff = time.time() - monitor_dic['last_check']  
             if time_diff >= interval:
@@ -243,4 +267,16 @@ while True:
         else:
             break
     time.sleep(5)
-"""
+
+if __name__ == '__main__':
+    '''
+    monitor_list_from_server = get_monitor_dic() #may have duplicate items
+    monitor_list= [] 
+    for service in  monitor_list_from_server:
+        if service not in monitor_list:
+            monitor_list.append(service)
+        else:pass #ignore duplicate service item
+    for i in monitor_list:
+        print i['plugin']
+    '''
+    pass

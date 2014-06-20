@@ -1,7 +1,23 @@
+#/usr/bin/python
+# -*- coding:utf-8 -*-
 import time
 import json
+from get_monitor_dic import *
 
-
+def service_handle(service, status_data ):
+    host_alert_dic ={}
+    time_diff = time.time()-status_data['last_check']
+    if time_diff <=service['check_interval']:
+        #print status_data
+        #这里处理服务具有的监控项信息，和报警信息。
+        service_dic=get_service_dic(serv=service)
+        for k,v in service_dic.items():
+            for trigger in v['trigger_list']:
+                
+        
+    else:
+        host_alert_dic[service['name']]='LostConnectionWarining',service['name'],service['check_interval'],time_diff
+    
 def handle(name, alert_index, status_data ):
     host_status_dic = {}
     #print '---------------->monitor name',name,alert_index.interval, time.time() - status_data['last_check']

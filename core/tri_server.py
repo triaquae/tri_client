@@ -21,9 +21,13 @@ proxy_monitor_dic = {}
 #monitor_result_dic = {}
 #从数据库中获取一个空的字典
 from get_monitor_dic import *
-monitor_result_dic=get_monitor_empty_dic()
+import socket
+myname = socket.getfqdn(socket.gethostname())
+myaddr = socket.gethostbyname(myname)
+monitor_result_dic=get_monitor_empty_dic(myaddr)
 is_server = 1 #False
 
+import conf.conf
 '''
 monitor_dic = redis_connector.r.get('TriAquae_monitor_status')
 if monitor_dic is not None:
@@ -190,9 +194,10 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
                         #处理代理请求
                         monitor_data=get_monitor_dic_fromDB.get_proxy_monitor_list(ip=client_ip)
                     else:
+                        #新版：server与proxy server同时使用此代码
                         #得到该ip的trunk_servers_id,如果没有数据怎么办,返回monitor_data为0
-                        server_ip='10.168.7.101'
                         monitor_data = get_config.get_config_for_host(ip=client_ip)
+                        #server_ip='10.168.7.101'
                         #monitor_data=get_monitor_dic_fromDB.get_one_host_monitor_dir(client_ip,server_ip)
                     #monitor_data=''时，没有得到该ip的监控项
                     print '---->',monitor_data
@@ -223,6 +228,7 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
                             pass
                     """
                 else:
+                    #注意新版中proxy与server功能一致，下面没有用了。
                     #proxy MonitorDataRequest as S
                     #如果不存在IP的监控项？？client_ip,不能使用 global data_dic
                     while 1:
@@ -247,6 +253,7 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
                         else:
                             pass
             #代理trunk_servers as local area network server optrate
+            #新版也通过tri_sender来判断监控项是否改变
             elif self.data_type.startswith('MonitorDataChange'):
                 if is_server:
                     #监控数据改变通过tri_sender.py来主动发送,这里不实现
@@ -470,6 +477,7 @@ if __name__ == "__main__":
             if a in ('agent','proxy','trunk_server'):
                 #global is_server
                 #print a
+                conf.proxy_server=True
                 is_server=0 #True
                 S_HOST='10.168.7.105'
                 S_PORT=9998

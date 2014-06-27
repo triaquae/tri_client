@@ -12,12 +12,17 @@ import redis_connector
 import socket
 import key_gen,random_pass
 import sys
+import conf.conf
 
 monitor_result_dic={}
 
+
+#获取redis中的数据
 def pull_status_data():
     #pull out status data from Redis
-    monitor_status_dic = redis_connector.r.get('monitor_status_data')
+    #monitor_status_dic = redis_connector.r.get('monitor_status_data')
+    r=redis_connector.get_redis()
+    monitor_status_dic = r.get('monitor_status_data')
     #取到到清除该数据
     #redis_connector.r.delete('monitor_status_data')
     if monitor_status_dic is not None:
@@ -27,6 +32,7 @@ def pull_status_data():
         return "No monitor data found in Redis,please check..."
         #sys.exit("No monitor data found in Redis,please check")
 
+#通知server/proxy_server端将状态数据存入到本地redis中，并获取redis中的状态数据
 def push_status_data(host,port):
     try:
         #connect server let the status data into redis
@@ -52,7 +58,7 @@ def push_status_data(host,port):
         psh_s.close()
 
 #通过templat模板来处理，每个模板具有的服务和主机与监控状态进行比较。如果存在主机单独与服务的关系，另作比较        
-template_dic,custom_monitor_list=get_all_template_dic() 
+template_dic,custom_monitor_list=get_all_template_dic()
 def service_handle(status_dic,template_dic,custom_monitor_list=None):
     alert_dic={}
     #1处理模板中的主机服务项
@@ -108,51 +114,75 @@ def service_handle(status_dic,template_dic,custom_monitor_list=None):
 def status_handler(status_dic,host_dic):
     alert_dic={}
     #if host_dic.has_key(status_dic[])
-    #解析处理主机监控字典，分析状态字典的内容
-    for h_k in host_dic.keys():
+    #解析处理本server内的各主机监控字典，分析状态字典的内容
+    for h_k,one_host_dic in host_dic.items():
         alert_list=[]
-        one_host_dic=host_dic[h_k]
+        #one_host_dic=host_dic[h_k]
         #1分析某台主机的是否返回了结果数据
-        if status_dic.has_key(one_host_dic['hostname']):
+        if status_dic.has_key(h_k):
+            #处理监控数据存入redis中？？？
+            start_dic[h_k]['inredis_time']=time.time()
+            #存入到本地redis
+            r=redis_connector.get_redis()
+            r.lpush(h_k,status_dic[h_k])
+            status_dic[h_k]
+            #2分析该主机的监控服务项
             if len(one_host_dic['service']):
+                #状态字典是否获取了监控项的状态
                 if len(status_dic[h_k]['result_values']):
                     #得到服务项的监控间隔
-                    for k,service in enumerate(one_host_dic['service']):
-                        print k,service['name'],service['check_interval']
-                        if status_dic[h_k]['result_values'].has_key(service['name']):
-                            #主机存在该监控服务项，用一个.py具体处理
+                    for service_k in one_host_dic['service'].items():
+                        print service_k,one_host_dic['service'][service_k]     #测试输出
+                        #状态字典中是否有主机的服务项
+                        if status_dic[h_k]['result_values'].has_key(service_k):
                             try:
-                                s = alert_handle.service_handle(service,  status_dic[h_k]['result_values'][service['name']] )
+                                #主机存在该监控服务项，用monitor_data_handle.py进行具体处理
+                                s = alert_handle.service_handle(one_host_dic['service'][service_k], status_dic[h_k]['result_values'][service_k] )
                                 if len(s) !=0:
                                     alert_list.append(s)
                             except KeyError:
-                                alert_list.append({"NoValidServiceData":(service,"service not exist in client data")} )
+                                alert_list.append({"NoValidServiceData":(service_k,"service not exist in client data")} )
                         else:
-                            alert_list.append({"NoValidServiceData":(service['name'],"service not exist in client data")} )
+                            alert_list.append({"NoValidServiceData":(service_k,"service not exist in client data")} )
                 else:
                     alert_list.append('host: %s has no get result data'%(one_host_dic['hostname']))
             else:
                 print '%s host has no service....'%(h_k)
+        #1没有收集到某主机h_k的状态信息
         else:
-            alert_list.append('host: %s has no monitoring...'%(one_host_dic['hostname']))
-            print 'host: %s has no monitoring...'%(one_host_dic['hostname'])
-        
-        #2分析需要得到监控状态的信息
-        '''
-        if len(one_host_dic['service']):
-            if status_dic.has_key(one_host_dic['hostname']): 
-            for k,service in enumerate(one_host_dic['service'])：
-                print k,service['name'],service['check_interval']
-        else:
-            print '%s host has no service....'%(h_k)
-        '''
+            alert_list.append('host: %s has not get monitoring status data...'%(h_k))
+            print 'host: %s has not get monitoring status data...'%(one_host_dic['hostname'])
+        #为某个主机添加警告列表
         alert_dic[h_k]=alert_list
-    alert_dic['TimeStamp'] = time.time()
-    redis_connector.r['TempTriAquaeAlertList'] = json.dumps(alert_dic)
+    #2分析需要得到监控状态的信息
     #一个处理监控项中是否有该结果信息，
     #另一个是处理在规定的时间间隔中，某主机的监控信息是否返回
-            
-#host_list = set(host_list)
+    for s_k in status_dic.keys():
+        #状态主机的hostname
+        alert_list=[]
+        if s_k in host_dic.keys():
+            for service_k in status_dic[s_k]['result_values'].keys():
+                if service_k in host_dic[s_k]['service'].keys():
+                    pass
+                else:
+                    print "host %s service %s is not find in db..." %(s_k,service_k)
+                    alert_list.append("host %s service %s is not find in db..." %(s_k,service_k))
+        else:
+            print "%s host is not find in monitor db...." %(s_k)
+            alert_list.append("%s host is not find in monitor db...." %(s_k))
+        alert_dic[s_k]=alert_list
+    
+    #报警信息存入到redis中，proxy端放到远程的里面。
+    alert_dic['TimeStamp'] = time.time()
+    if conf.proxy_server:
+        r=redis_connector.get_redis()
+    else:
+        r=redis_connector.get_redis('10.168.0.218',6379,0)
+    r['TempTriAquaeAlertList'] = json.dumps(alert_dic)
+    #redis_connector.r['TempTriAquaeAlertList'] = json.dumps(alert_dic)
+
+#分析状态数据字典后，处理存入到redis中，供画图使用。
+    
 def data_handler(host_dic):
     graph_dic = {}
     alert_dic = {}
@@ -222,7 +252,9 @@ aa=test()
 '''
 time_counter = time.time()
 #从数据库得到监控的字典信息，用来检测返回结果信息的正确性
-host_monitor_dic = get_all_host_monitor_dic()
+myname = socket.getfqdn(socket.gethostname())
+myaddr = socket.gethostbyname(myname)
+host_monitor_dic = get_all_host_monitor_dic(myaddr)
 #将结果数据字典改为全局的，这样可以方便比较超时没有接受数据
 monitor_status_dic={}
 counter = 0

@@ -19,14 +19,14 @@ import key_gen,random_pass
 proxy_monitor_dic = {}
 #用于存在所有主机的监控结果字典{hostname:{'hostname':hostname,'result_values':'','last_check':time.time()}}
 #monitor_result_dic = {}
-#从数据库中获取一个空的字典
+#从数据库中获取本服务区域内的一个空字典
 from get_monitor_dic import *
 import socket
 myname = socket.getfqdn(socket.gethostname())
 myaddr = socket.gethostbyname(myname)
 monitor_result_dic=get_monitor_empty_dic(myaddr)
 is_server = 1 #False
-
+print monitor_result_dic
 import conf.conf
 '''
 monitor_dic = redis_connector.r.get('TriAquae_monitor_status')
@@ -485,8 +485,6 @@ if __name__ == "__main__":
                 get_monitor_dic(S_HOST,S_PORT)
         else:
                print '--------------------------server starting--------------------'
-
-if __name__ == "__main__":
     HOST, PORT = "0.0.0.0", 9998
     # Create the server, binding to localhost on port 9998
     try:

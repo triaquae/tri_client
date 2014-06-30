@@ -74,7 +74,7 @@ def get_config_for_agent(host=None,ip=None):
 
 
 if __name__ == '__main__':
-    host_monitor_list = get_config_for_host('server_test_18')
+    host_monitor_list = get_config_for_host(ip='10.168.0.218')
     print host_monitor_list
     #host_monitor_list = get_config_for_host(None,'10.168.7.101')
     if type(host_monitor_list) is not str:

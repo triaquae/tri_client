@@ -2,8 +2,8 @@
 # -*- coding:utf-8 -*-
 import global_setting
 import json,os,sys,threading
-from conf import templates, hosts
-from get_monitor_dic import get_monitor_host_list,get_all_host_monitor_dic
+from conf import templates, hosts,conf
+from get_monitor_dic import * #get_monitor_host_list,get_all_host_monitor_dic
 import db_connector
 from triWeb.models import Group,IP
 import monitor_data_handle as alert_handle
@@ -12,7 +12,6 @@ import redis_connector
 import socket
 import key_gen,random_pass
 import sys
-import conf.conf
 
 monitor_result_dic={}
 
@@ -58,7 +57,7 @@ def push_status_data(host,port):
         psh_s.close()
 
 #通过templat模板来处理，每个模板具有的服务和主机与监控状态进行比较。如果存在主机单独与服务的关系，另作比较        
-template_dic,custom_monitor_list=get_all_template_dic()
+template_dic,custom_monitor_list = get_all_template_dic()
 def service_handle(status_dic,template_dic,custom_monitor_list=None):
     alert_dic={}
     #1处理模板中的主机服务项
@@ -119,32 +118,38 @@ def status_handler(status_dic,host_dic):
         alert_list=[]
         #one_host_dic=host_dic[h_k]
         #1分析某台主机的是否返回了结果数据
+        print "\033[32;1mhost:%s\033[0m"%(h_k)
         if status_dic.has_key(h_k):
             #处理监控数据存入redis中？？？
-            start_dic[h_k]['inredis_time']=time.time()
+            status_dic[h_k]['inredis_time']=time.time()
             #存入到本地redis
             r=redis_connector.get_redis()
             r.lpush(h_k,status_dic[h_k])
-            status_dic[h_k]
+            #print r.lpop(h_k)
             #2分析该主机的监控服务项
             if len(one_host_dic['service']):
                 #状态字典是否获取了监控项的状态
                 if len(status_dic[h_k]['result_values']):
                     #得到服务项的监控间隔
-                    for service_k in one_host_dic['service'].items():
-                        print service_k,one_host_dic['service'][service_k]     #测试输出
+                    for service_k in one_host_dic['service'].keys():
+                        #print service_k,one_host_dic['service'][service_k]     #测试输出
                         #状态字典中是否有主机的服务项
                         if status_dic[h_k]['result_values'].has_key(service_k):
                             try:
                                 #主机存在该监控服务项，用monitor_data_handle.py进行具体处理
-                                s = alert_handle.service_handle(one_host_dic['service'][service_k], status_dic[h_k]['result_values'][service_k] )
+                                
+                                alert_info = alert_handle.service_handle(one_host_dic['service'][service_k], status_dic[h_k]['result_values'][service_k] )
                                 if len(s) !=0:
-                                    alert_list.append(s)
+                                    alert_list.append(alert_info)
+                                else:pass
                             except KeyError:
+                                print "service %s not exist in client data"%(service_k)
                                 alert_list.append({"NoValidServiceData":(service_k,"service not exist in client data")} )
                         else:
+                            print 'host:%s ,service:% is not exist'%(h_k,service_k)
                             alert_list.append({"NoValidServiceData":(service_k,"service not exist in client data")} )
                 else:
+                    print 'host: %s has no get result data'%(one_host_dic['hostname'])
                     alert_list.append('host: %s has no get result data'%(one_host_dic['hostname']))
             else:
                 print '%s host has no service....'%(h_k)
@@ -174,13 +179,28 @@ def status_handler(status_dic,host_dic):
     
     #报警信息存入到redis中，proxy端放到远程的里面。
     alert_dic['TimeStamp'] = time.time()
+    print alert_dic
+    
     if conf.proxy_server:
-        r=redis_connector.get_redis()
-    else:
         r=redis_connector.get_redis('10.168.0.218',6379,0)
+    else:
+        r=redis_connector.get_redis()
     r['TempTriAquaeAlertList'] = json.dumps(alert_dic)
     #redis_connector.r['TempTriAquaeAlertList'] = json.dumps(alert_dic)
+    '''
+    for h_k in host_dic.items():
+        print get_redis_status_data(r,h_k)
+    '''
+def get_redis_status_data(r,key):
+    if r.llen(key): 
+        return 'not get status data'
+    for i in range(r.llen(key)):
+        value=r.lpop(key)
+        return value
+    
 
+
+    
 #分析状态数据字典后，处理存入到redis中，供画图使用。
     
 def data_handler(host_dic):
@@ -255,12 +275,14 @@ time_counter = time.time()
 myname = socket.getfqdn(socket.gethostname())
 myaddr = socket.gethostbyname(myname)
 host_monitor_dic = get_all_host_monitor_dic(myaddr)
+#print host_monitor_dic
 #将结果数据字典改为全局的，这样可以方便比较超时没有接受数据
 monitor_status_dic={}
 counter = 0
 host='10.168.0.218'
 post=9998
 while True:
+    print '\033[42;1m-----Alert Checking Executed...>>>>\033[0m' ,counter
     #if time.time() - time_counter > 60: #refresh monitor list every 60 sec
         #print '------------------------------------------------------------------->'
         #del sys.modules['conf.templates.]
@@ -270,17 +292,15 @@ while True:
     monitor_status_dic=push_status_data(host,post)
     if monitor_status_dic is not None:
         if len(monitor_status_dic) and type(monitor_status_dic) is dict:
+            '''
             for k in monitor_status_dic.keys():
                 print '\033[34;1mone_result:\033[0m',monitor_status_dic[k]
-            #status_handler(monitor_status_dic,host_monitor_dic)
+            '''
+            status_handler(monitor_status_dic,host_monitor_dic)
         else:
             print 'result status data is null...'
     else:
         print 'no get back result status data...'
-    #monitor_status_dic = pull_status_data()
-    #print monitor_status_dic
-    #data_handler( monitor_list )
-    print '\033[42;1m-----Alert Checking Executed...>>>>\033[0m' ,counter
     counter += 1
     #p = subprocess.Popen('python /home/alex/tri_client/status_data_optimzation.py', stdout=subprocess.PIPE, shell=True)
     #print monitor_list

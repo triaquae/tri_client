@@ -64,7 +64,8 @@ def get_monitor_empty_dic(server_ip):
     monitor_dic={}
     try:
         ts=trunk_servers.objects.get(ip_address=server_ip)
-        for host_obj in ts.IP_set.all():
+        print ts
+        for host_obj in ts.ip_set.all():
             monitor_dic[host_obj.hostname]={"hostname":host_obj.hostname,'result_values':{}}
             service_list=[]
             template_list=[]
@@ -78,9 +79,9 @@ def get_monitor_empty_dic(server_ip):
             #通过所属组、所属模板的servers
             for t_name in set(template_list):
                 t_obj = templates.objects.get( name = t_name)
-                service_list+=t_obj.service_list.values()
+                service_list +=t_obj.service_list.values()
             #主机本身具有的servers
-            service_list+=host_obj.custom_services.values()
+            service_list +=host_obj.custom_services.values()
             #如果监控服务项为空
             if len(service_list):
                 for service in service_list:
@@ -96,7 +97,7 @@ def get_all_host_monitor_dic(server_ip):
     monitor_dic={}
     try:
         ts=trunk_servers.objects.get(ip_address=server_ip)
-        for host_obj in ts.IP_set.all():
+        for host_obj in ts.ip_set.all():
             monitor_dic[host_obj.hostname]={"hostname":host_obj.hostname,'service':{}}
             service_list=[]
             template_list=[]
@@ -110,17 +111,15 @@ def get_all_host_monitor_dic(server_ip):
             #通过所属组、所属模板的servers
             for t_name in set(template_list):
                 t_obj = templates.objects.get( name = t_name)
-                service_list+=t_obj.service_list.values()
+                service_list+=t_obj.service_list.all()
             #主机本身具有的servers
-            service_list+=host_obj.custom_services.values()
+            service_list += host_obj.custom_services.all()
             #如果监控服务项为空
             if len(service_list):
                 for service in service_list:
-                    
-                    item_list=service.item_list.all()
-                    trigger_list=service.trigger_list.all()
-                    
-                    monitor_dic[host_obj.hostname]['service'][service['name']]=service
+                    #item_list=service.item_list.values()
+                    #trigger_list=service.trigger_list.values()
+                    monitor_dic[host_obj.hostname]['service'][service.name]=service
             else:
                 pass
         return monitor_dic
@@ -164,30 +163,39 @@ def get_service_dic(serv=None):
             print service
             item_list=service.item_list.all()
             #trigger_list=service.trigger_list.all()
-            host_list=service.ip_set.all()
-            #host_list+=get_all_template_dic()[]
-            #error no template_set???
-            template_list=service.templates_set.all()
-            print template_list
-            service_dic[service.name]={
-                    'host_list':host_list,
-                    'item_list':item_list,
-                    #'trigger_list':trigger_list,
-                    'check_interval':service.check_interval
-                }
+            try:
+                trigger = triggers.objects.get(name=service.trigger)
+                #print trigger.expression
+                host_list=service.ip_set.all()
+                #host_list+=get_all_template_dic()[]
+                #error no template_set???
+                template_list=service.templates_set.all()
+                print template_list
+                service_dic[service.name]={
+                        'host_list':host_list,
+                        'item_list':item_list,
+                        #'trigger_list':trigger_list,
+                        'trigger_dic':json.loads(trigger.expression),
+                        'check_interval':service.check_interval
+                    }
+            except ObjectDoesNotExist,err:
+                print 'not data %s' %(str(err))
     else:
         try:
             #service=services.objects.get(name=ser_name)
             item_list=serv.item_list.all()
             #trigger_list=serv.trigger_list.all()
-            
-            service_dic[serv['name']]={
+            trigger = triggers.objects.get(name=serv.trigger)
+            service_dic[serv.name]={
                     'item_list':item_list,
                     #'trigger_list':trigger_list,
-                    'check_interval':serv['check_interval']
+                    'trigger_dic':json.loads(trigger.expression),
+                    'check_interval':serv.check_interval
                 }
         except ObjectDoesNotExist,err:
-            print 'error'
+            print '%s error' %(err)
+        finally:
+            pass
     return service_dic
 
     
@@ -219,7 +227,7 @@ def get_monitor_host_list():
         
 if __name__=='__main__':
     '''
-    host_monitor_dic=get_all_host_monitor_dic()
+    host_monitor_dic=get_all_host_monitor_dic('10.168.0.218')
     print host_monitor_dic
     for h_k in host_monitor_dic.keys():
         one_host_dic=host_monitor_dic[h_k]
@@ -231,8 +239,8 @@ if __name__=='__main__':
             print 'host has no service...'
     '''
     #a,b=get_all_template_dic()
-    serv_dic=get_service_dic()
-    print serv_dic
-    
-    #print get_monitor_empty_dic()
+    #serv_dic=get_service_dic()
+    #print serv_dic
+    #print get_monitor_empty_dic('10.168.0.218')
+    print get_all_host_monitor_dic('10.168.0.218')
 #print get_monitor_host_list()

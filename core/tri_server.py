@@ -80,31 +80,7 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
                     break
                 return_data += data
             return return_data
-        '''
-        def receive_data_by_size(sock,size):
-            return_data = ''
-            filename = time.time() 
-            fp = open('/tmp/'+str(filename),'wb')
-            restsize = size
-            print "recving..."
-            while 1:
-                if(restsize > 8096):
-                    data = sock.recv(8096)
-                    return_data += data
-                else:
-                    data = sock.recv(restsize)
-                    return_data += data
-                if restsize ==0:
-                    break
-                fp.write(data)
-                restsize = restsize - len(data)
-            print restsize
-                #if restsize <= 0:
-                #break
-            fp.close()
-            print "receving is done...............",restsize                    
-            return return_data
-        '''
+
         # self.request is the TCP socket connected to the client
         def RSA_verifyication(sock):
             raw_rsa_data = sock.recv(396)  #fixed key length
@@ -178,25 +154,32 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
             elif self.data_type.startswith('MonitorDataRequest'):
                 #第一次进行监控项信息的通信,还需要把主机名hostname传送过去？
                 #self.request.send('ReadyToSendStatusData')
+                
                 if is_server:
+                    
                     #server deal
                     proxy_flag=self.data_type.split("|")
                     if proxy_flag[1] == 'proxy':
                         #处理代理请求
                         monitor_data=get_monitor_dic_fromDB.get_proxy_monitor_list(ip=client_ip)
                     else:
+                        
                         #得到该ip的trunk_servers_id,如果没有数据怎么办,返回monitor_data为0
                         server_ip='10.168.7.101'
-			monitor_data = get_config.get_config_for_host(ip=client_ip)	
+                        monitor_data = get_config.get_config_for_host(ip=client_ip)    
                         #monitor_data=get_monitor_dic_fromDB.get_one_host_monitor_dir(client_ip,server_ip)
-                    #monitor_data=''时，没有得到该ip的监控项
-		    if type(monitor_data) is not str:
-			print '---->',monitor_data
-			print len(json.dumps(monitor_data  ))	
-			self.request.send(  str(len(json.dumps(monitor_data))) )
-			time.sleep(0.5)
-			self.request.send( json.dumps(monitor_data)  )
-                    """while 1:
+                        #monitor_data=''时，没有得到该ip的监控项
+                        
+                        if type(monitor_data) is not str:
+                            print '---->',monitor_data
+                            print len(json.dumps(monitor_data  ))    
+                            self.request.send(  str(len(json.dumps(monitor_data))) )
+                            time.sleep(0.5)
+                            self.request.send( json.dumps(monitor_data)  )
+                        else:
+                            print '\033[43;1m------code goes here-------\033[0m', monitor_data
+                            self.request.send( json.dumps(monitor_data)  )
+                        """while 1:
                         if monitor_data:
                             print '---frist send monitor_data!---'
                             self.request.send(str(len(json.dumps(monitor_data))))
@@ -214,7 +197,7 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
                             break
                         else:
                             pass
-		    """
+                        """
                 else:
                     #proxy MonitorDataRequest as S  
                     #如果不存在IP的监控项？？client_ip,不能使用 global data_dic
@@ -468,7 +451,7 @@ if __name__ == "__main__":
                 #表示为代理服务,连接主server,得到监控数据
                 get_monitor_dic(S_HOST,S_PORT)
         else:
-       	        print '--------------------------server starting--------------------'
+                   print '--------------------------server starting--------------------'
 
 if __name__ == "__main__":
     HOST, PORT = "0.0.0.0", 9998

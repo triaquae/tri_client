@@ -5,7 +5,7 @@ import socket,time,sys
 import plugins,key_gen,random_pass
 import plugin_conf
 import commands
-HOST = '10.168.7.101'    # The remote host
+HOST = '10.168.7.161'    # The remote host
 PORT = 9998             # The same port as used by the server
 hostname = 'localhost'
 status_dic = {'services': {}}
@@ -18,12 +18,12 @@ conf.BASE_DIR
 
 
 def pprint(msg,msg_type):
-	if msg_type == 'err':
-		print '\033[31;1mError:%s\033[0m' % msg
-	elif msg_type == 'success':
-		print '\033[32;1m%s\033[0m' % msg
-	else:
-		pass
+    if msg_type == 'err':
+        print '\033[31;1mError:%s\033[0m' % msg
+    elif msg_type == 'success':
+        print '\033[32;1m%s\033[0m' % msg
+    else:
+        pass
 #monitor_dic k=ip
 def get_interval_dic(monitor_dic):
     global interval_dic
@@ -80,41 +80,53 @@ def get_monitor_dic():
         RSA_status=req_s.recv(1024)
         if RSA_status == 'RSA_OK':
             #RSA认证通过后，发生数据状态，
-            req_s.send('MonitorDataRequest'+'|'+'client')
+            print '\033[42;1m---------passed RSA verification--------\033[0m'
+            req_s.send('MonitorDataRequest|client')
             #接收到的数据大小如何确定
             monitor_data_size=req_s.recv(1024)
-            if int(monitor_data_size) == 0:
-                print 'no monitor_data configured for this host'
-                #req_s.send('get_info')
-                return 0
-            elif int(monitor_data_size) <=8096:
-                monitor_data=req_s.recv(8096)
-            else:
-                monitor_data=revc_data_by_size(req_s,int(monitor_data_size))
+            try:
+                if int(monitor_data_size) == 0:
+                    print 'no monitor_data configured for this host'
+                    #req_s.send('get_info')
+                    return 0
+                elif int(monitor_data_size) <=8096:
+                    monitor_data=req_s.recv(8096)
+                else:
+                    monitor_data=revc_data_by_size(req_s,int(monitor_data_size))
+            except ValueError:
+                pprint("Error:%s"% monitor_data_size, 'err')
+                sys.exit() 
             if len(monitor_data) == int(monitor_data_size): #data received success
-		return json.loads(monitor_data)
-	    else:
-		pprint('Could not retrieve the monitor list for this host,please check with your Monitor server', 'err')
-		sys.exit()
+                client_config_data = json.loads(monitor_data)
+                if isinstance(client_config_data,list):
+                    print 'code goes here----------->'
+                    return client_config_data
+                else:
+                    pprint("Error:%s" % client_config_data, 'err')
+                    sys.exit()
+            else:
+                pprint('Could not retrieve the monitor list for this host,please check with your Monitor server', 'err')
+                sys.exit()
 
-            #将监控的数据放到文件中,并对文件生成md5密钥
+                #将监控的数据放到文件中,并对文件生成md5密钥
         else:
-	    pprint('RSA authentication failed.......','err')
+            pprint('RSA authentication failed.......','err')
             sys.exit()
     except socket.error:
         pprint(socket.error, 'err')
+        sys.exit()
     finally:
         req_s.close()
 
 if __name__ == '__main__':        
-	monitor_list_from_server = get_monitor_dic() #may have duplicate items
-	monitor_list= [] 
-	for service in  monitor_list_from_server:
-		if service not in monitor_list:
-			monitor_list.append(service)
-		else:pass #ignore duplicate service item
-	for i  in monitor_list:
-		print i
+    monitor_list_from_server = get_monitor_dic() #may have duplicate items
+    monitor_list= [] 
+    for service in  monitor_list_from_server:
+        if service not in monitor_list:
+            monitor_list.append(service)
+        else:pass #ignore duplicate service item
+    for i  in monitor_list:
+        print i, '---='
 
 
 

@@ -274,12 +274,12 @@ time_counter = time.time()
 #从数据库得到监控的字典信息，用来检测返回结果信息的正确性
 myname = socket.getfqdn(socket.gethostname())
 myaddr = socket.gethostbyname(myname)
-host_monitor_dic = get_all_host_monitor_dic(myaddr)
+host_monitor_dic = get_all_host_monitor_dic('10.168.7.161')
 #print host_monitor_dic
 #将结果数据字典改为全局的，这样可以方便比较超时没有接受数据
 monitor_status_dic={}
 counter = 0
-host='10.168.0.218'
+host='10.168.7.161'
 post=9998
 while True:
     print '\033[42;1m-----Alert Checking Executed...>>>>\033[0m' ,counter

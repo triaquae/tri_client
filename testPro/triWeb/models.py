@@ -231,7 +231,8 @@ class items(models.Model): # monitor item
 
 class triggers(models.Model): 
     name = models.CharField(max_length=50,unique=True)
-    expression = models.CharField(max_length=1000)
+    expression = models.TextField()
+    #expression = models.CharField(max_length=1000)
     description = models.CharField(max_length=100)
     '''
     serverity_list = (('information','Information'),

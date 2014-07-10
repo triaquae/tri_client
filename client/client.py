@@ -7,7 +7,7 @@ import plugin_conf
 import commands
 import importlib
 from monitor_data_deal import *
-HOST = '10.168.0.218'    # The remote host
+HOST = '10.168.7.161'    # The remote host
 PORT = 9998             # The same port as used by the server
 hostname = 'localhost'
 status_dic = {'services': {}}
@@ -126,7 +126,7 @@ def multi_job(m_list, m_interval,frist_invoke=1):
     status_dic = {}
     #run single thread...
     def run(name,m_api,frist_invoke=1):
-        print 'going to run ...',name
+        print 'going to run ...',name, m_api
         """
         fun=getattr(scripts_conf,name)
         #得到某个监控项的资产信息
@@ -139,6 +139,7 @@ def multi_job(m_list, m_interval,frist_invoke=1):
         """
         plugin_module=importlib.import_module(m_api)
         status_dic[name]=plugin_module.monitor(frist_invoke)
+        #print '--------------> ', status_dic
         #
         interval_dic[m_interval]['last_check'] = time.time()
         return interval_dic[m_interval]
@@ -151,7 +152,7 @@ def multi_job(m_list, m_interval,frist_invoke=1):
             return status_dic
             break
         else: 
-            time.sleep(1)
+            time.sleep(0.2)
 
 def send_data(result_dic):
     try:

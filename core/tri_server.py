@@ -24,26 +24,32 @@ from get_monitor_dic import *
 import socket
 myname = socket.getfqdn(socket.gethostname())
 myaddr = socket.gethostbyname(myname)
-monitor_result_dic=get_monitor_empty_dic(myaddr)
+monitor_result_dic=get_monitor_empty_dic('10.168.7.161')
+#monitor_result_dic=get_monitor_empty_dic(myaddr)
+
+
 is_server = 1 #False
 print monitor_result_dic
 import conf.conf
-'''
-monitor_dic = redis_connector.r.get('TriAquae_monitor_status')
-if monitor_dic is not None:
-    monitor_dic = json.loads(monitor_dic)
-    #make sure all the hosts are in the monitor list
-        for h in IP.objects.filter(status_monitor_on=True):
-            if h.hostname not in monitor_dic.keys():
-                     monitor_dic[h.hostname] = {}
-else:
-        monitor_dic = {}
-        for h in IP.objects.filter(status_monitor_on=True):
-                 monitor_dic[h.hostname] = {}
 
+def pprint(msg,msg_type, exit=0):
+    if sys.platform.startswith("win"):
+        if msg_type == 'err':
+            print 'Error:%s' % msg
+        elif msg_type == 'success':
+            print '%s' % msg
+        else:
+            pass
+    else:
+        if msg_type == 'err':
+            print '\033[31;1mError:%s\033[0m' % msg
+        elif msg_type == 'success':
+            print '\033[32;1m%s\033[0m' % msg
+        else:
+            pass
+    if exit == 1:sys.exit()
+    
 
-#print monitor_dic 
-'''
 def receive_data_by_size(sock,size):
     return_data = ''
     filename = time.time() 
@@ -68,7 +74,14 @@ def receive_data_by_size(sock,size):
     print "receving is done...............",restsize                    
     return return_data
             
+            
+            
+if not isinstance(monitor_result_dic, dict):
+    pprint("Couldn't find any confiugration data from DB,make sure your TriAquae master server is correctly configured!", 'err', exit=1 )
+    
 print '--------------server and trunk_servers to deal monitor info----------------'
+
+
 class MyTCPHandler(SocketServer.BaseRequestHandler):
     def handle(self):
         def md5_file(filename):
@@ -89,31 +102,7 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
                     break
                 return_data += data
             return return_data
-        '''
-        def receive_data_by_size(sock,size):
-            return_data = ''
-            filename = time.time() 
-            fp = open('/tmp/'+str(filename),'wb')
-            restsize = size
-            print "recving..."
-            while 1:
-                if(restsize > 4096):
-                    data = sock.recv(4096)
-                    return_data += data
-                else:
-                    data = sock.recv(restsize)
-                    return_data += data
-                if restsize ==0:
-                    break
-                fp.write(data)
-                restsize = restsize - len(data)
-            print restsize
-                #if restsize <= 0:
-                #break
-            fp.close()
-            print "receving is done...............",restsize                    
-            return return_data
-        '''
+
         # self.request is the TCP socket connected to the client
         def RSA_verifyication(sock):
             raw_rsa_data = sock.recv(396)  #fixed key length
@@ -207,26 +196,7 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
                         time.sleep(0.5)
                         self.request.send( json.dumps(monitor_data)  )
                     else:pass
-                    """
-                    while 1:
-                        if monitor_data:
-                            print '---frist send monitor_data!---'
-                            self.request.send(str(len(json.dumps(monitor_data))))
-                            self.request.sendall(json.dumps(monitor_data))
-                        else:
-                            #没有该ip的监控项数据，返回0
-                            #self.request.send("no_monitor")
-                            self.request.send(json.dumps(monitor_data))
-                            print 'ip has not monitor data......'
-                        #接收客户端是否接收成功！注意这是阻塞等待接收？？？
-                        self.data_status=self.request.recv(1024)
-                        print self.data_status,'*+'*30
-                        if self.data_status:
-                            #接收成功。
-                            break
-                        else:
-                            pass
-                    """
+
                 else:
                     #注意新版中proxy与server功能一致，下面没有用了。
                     #proxy MonitorDataRequest as S
@@ -284,7 +254,7 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
                     raw_data_from_client = self.request.recv(4096)
                 else:
                     raw_data_from_client = receive_data_by_size(self.request,raw_data_from_client_size)
-                print '+++', raw_data_from_client,'+++'
+                #print '+++', raw_data_from_client,'+++'
                 monitor_result_data = json.loads( raw_data_from_client )
                 if is_server:
                     #处理收集到的资产信息，分为本地和代理发送过来的。
@@ -320,50 +290,28 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
                         #最后处理资产收集到的字典设置
                     else:
                         #本地的,只是一个监控状态数据，进行数据基本处理,并将状态信息放到初始字典中
+                        
+                        
                         for k in monitor_result_data['result_values'].keys():
-                            monitor_result_data['result_values'][k]['last_check']=time.time()
-                            monitor_result_dic[monitor_result_data['hostname']]['result_values'][k]= monitor_result_data['result_values'][k]
+                            try:    
+                                monitor_result_data['result_values'][k]['last_check']=time.time()
+                                monitor_result_dic[monitor_result_data['hostname']]['result_values'][k]= monitor_result_data['result_values'][k]
+
+                            except TypeError,err:
+                                pprint(err,'err')
+                                continue 
                         #monitor_result_dic[monitor_result_data['hostname']]=monitor_result_data
-                        print '...',monitor_result_data,'...'
+                        #print '...',monitor_result_data,'...'
                         print "\033[31;1m------get conn from %s------\033[0m\n" %monitor_result_data['hostname']
                     print '\033[34;1mmonitor data result is\033[0m'
-                    for k in monitor_result_dic.keys():
-                        print '\033[34;1mone_result:\033[0m',monitor_result_dic[k]
-                    #print monitor_result_dic,'\n'
-                    '''
-                    push status data into JSON file
-                    if client_hostname == 'localhost':
-                        #print redis_connector.r.keys()
-                        redis_connector.r['TriAquae_monitor_status'] = json.dumps(monitor_result_dic)
-                        #redis_connector.r.save()
-                        print 'status inserted into JSON file'
-                    '''
+                    for k,v in monitor_result_dic.items():
+                        print '\033[34;1mone_result:\033[0m',k,v
                 else:
                     #proxy deal 向服务端发送数据HOST=?,PORT=? is_client=0
                     #把接收client端的数据放到redis中
                     timestemp=time.time()
                     redis_connector.r[timestemp]=json.dumps(monitor_result_data)
-                    '''
-                    S_HOST='10.168.7.40'
-                    S_PORT=9998
-                    #何时向服务器端发送资产信息？？接到本地资产信息时发送，所有资产信息都收集到
-                    #在之后更新的资产信息时，如何发送？？
-                    client_hostname = client_ip
-                    proxy_assets_dic={}
-                    assets_dic={}
-                    assets_dic[client_hostname]=monitor_result_data
-                    proxy_assets_dic['HOST'].append(assets_dic)
-                    if client_hostname == HOST:
-                        send_data(0,S_HOST,S_PORT,proxy_assets_dic)
-                    '''
-                    '''
-                    for name,service_status in monitor_result_data.items():
-                        #print name,service_status
-                        if type(service_status) is dict:
-                            service_status['last_check'] = time.time()
-                        assets_dic[client_hostname][name] =  service_status
-                    proxy_assets_dic[HOST].append(assets_dic)
-                    '''
+
 
             elif self.data_type.startswith('StatusDataIntoRedis'):
                 timestemp=time.time()

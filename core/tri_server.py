@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 #-*- coding:utf-8 -*-
+#test
 import SocketServer,socket,time
 import pickle,json
 import os,commands,stat
@@ -17,24 +18,39 @@ import get_monitor_dic_fromDB
 import getopt,sys
 import key_gen,random_pass
 proxy_monitor_dic = {}
+#用于存在所有主机的监控结果字典{hostname:{'hostname':hostname,'result_values':'','last_check':time.time()}}
+#monitor_result_dic = {}
+#从数据库中获取本服务区域内的一个空字典
+from get_monitor_dic import *
+import socket
+myname = socket.getfqdn(socket.gethostname())
+myaddr = socket.gethostbyname(myname)
+monitor_result_dic=get_monitor_empty_dic('10.168.7.161')
+#monitor_result_dic=get_monitor_empty_dic(myaddr)
+
+
 is_server = 1 #False
+print monitor_result_dic
+import conf.conf
 
-'''
-monitor_dic = redis_connector.r.get('TriAquae_monitor_status')
-if monitor_dic is not None:
-    monitor_dic = json.loads(monitor_dic)
-    #make sure all the hosts are in the monitor list
-        for h in IP.objects.filter(status_monitor_on=True):
-            if h.hostname not in monitor_dic.keys():
-                     monitor_dic[h.hostname] = {}
-else:
-        monitor_dic = {}
-        for h in IP.objects.filter(status_monitor_on=True):
-                 monitor_dic[h.hostname] = {}
+def pprint(msg,msg_type, exit=0):
+    if sys.platform.startswith("win"):
+        if msg_type == 'err':
+            print 'Error:%s' % msg
+        elif msg_type == 'success':
+            print '%s' % msg
+        else:
+            pass
+    else:
+        if msg_type == 'err':
+            print '\033[31;1mError:%s\033[0m' % msg
+        elif msg_type == 'success':
+            print '\033[32;1m%s\033[0m' % msg
+        else:
+            pass
+    if exit == 1:sys.exit()
+    
 
-
-#print monitor_dic 
-'''
 def receive_data_by_size(sock,size):
     return_data = ''
     filename = time.time() 
@@ -42,8 +58,8 @@ def receive_data_by_size(sock,size):
     restsize = size
     print "recving..."
     while 1:
-        if(restsize > 8096):
-            data = sock.recv(8096)
+        if(restsize > 4096):
+            data = sock.recv(4096)
             return_data += data
         else:
             data = sock.recv(restsize)
@@ -54,12 +70,19 @@ def receive_data_by_size(sock,size):
         restsize = restsize - len(data)
     print restsize
         #if restsize <= 0:
-        #    break
+        #break
     fp.close()
     print "receving is done...............",restsize                    
     return return_data
             
+            
+            
+if not isinstance(monitor_result_dic, dict):
+    pprint("Couldn't find any confiugration data from DB,make sure your TriAquae master server is correctly configured!", 'err', exit=1 )
+    
 print '--------------server and trunk_servers to deal monitor info----------------'
+
+
 class MyTCPHandler(SocketServer.BaseRequestHandler):
     def handle(self):
         def md5_file(filename):
@@ -154,52 +177,30 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
             elif self.data_type.startswith('MonitorDataRequest'):
                 #第一次进行监控项信息的通信,还需要把主机名hostname传送过去？
                 #self.request.send('ReadyToSendStatusData')
-                
                 if is_server:
-                    
                     #server deal
                     proxy_flag=self.data_type.split("|")
                     if proxy_flag[1] == 'proxy':
                         #处理代理请求
                         monitor_data=get_monitor_dic_fromDB.get_proxy_monitor_list(ip=client_ip)
                     else:
-                        
+                        #新版：server与proxy server同时使用此代码
                         #得到该ip的trunk_servers_id,如果没有数据怎么办,返回monitor_data为0
-                        server_ip='10.168.7.101'
-                        monitor_data = get_config.get_config_for_host(ip=client_ip)    
+                        monitor_data = get_config.get_config_for_host(ip=client_ip)
+                        #server_ip='10.168.7.101'
                         #monitor_data=get_monitor_dic_fromDB.get_one_host_monitor_dir(client_ip,server_ip)
-                        #monitor_data=''时，没有得到该ip的监控项
-                        
-                        if type(monitor_data) is not str:
-                            print '---->',monitor_data
-                            print len(json.dumps(monitor_data  ))    
-                            self.request.send(  str(len(json.dumps(monitor_data))) )
-                            time.sleep(0.5)
-                            self.request.send( json.dumps(monitor_data)  )
-                        else:
-                            print '\033[43;1m------code goes here-------\033[0m', monitor_data
-                            self.request.send( json.dumps(monitor_data)  )
-                        """while 1:
-                        if monitor_data:
-                            print '---frist send monitor_data!---'
-                            self.request.send(str(len(json.dumps(monitor_data))))
-                            self.request.sendall(json.dumps(monitor_data))
-                        else:
-                            #没有该ip的监控项数据，返回0
-                            #self.request.send("no_monitor")
-                            self.request.send(json.dumps(monitor_data))
-                            print 'ip has not monitor data......'
-                        #接收客户端是否接收成功！注意这是阻塞等待接收？？？
-                        self.data_status=self.request.recv(1024)
-                        print self.data_status,'*+'*30
-                        if self.data_status:
-                            #接收成功。
-                            break
-                        else:
-                            pass
-                        """
+                    #monitor_data=''时，没有得到该ip的监控项
+                    print '---->',monitor_data
+                    print len(json.dumps(  monitor_data  ))
+                    self.request.send( str(len(json.dumps(monitor_data))) )
+                    if type(monitor_data) is not str:
+                        time.sleep(0.5)
+                        self.request.send( json.dumps(monitor_data)  )
+                    else:pass
+
                 else:
-                    #proxy MonitorDataRequest as S  
+                    #注意新版中proxy与server功能一致，下面没有用了。
+                    #proxy MonitorDataRequest as S
                     #如果不存在IP的监控项？？client_ip,不能使用 global data_dic
                     while 1:
                         if proxy_monitor_dic.has_key(client_ip):
@@ -223,6 +224,7 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
                         else:
                             pass
             #代理trunk_servers as local area network server optrate
+            #新版也通过tri_sender来判断监控项是否改变
             elif self.data_type.startswith('MonitorDataChange'):
                 if is_server:
                     #监控数据改变通过tri_sender.py来主动发送,这里不实现
@@ -233,8 +235,8 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
                     #get_proxy_monitor_dic
                     #data_size=self.request.recv(1024)
                     data_size=self.data_type.split("|")[1]
-                    if data_size <=8096:
-                        proxy_monitor_new_dic=json.loads(self.request.recv(8096))
+                    if data_size <=4096:
+                        proxy_monitor_new_dic=json.loads(self.request.recv(4096))
                     else:
                         proxy_monitor_new_dic=json.loads(receive_data_by_size(self.request,int(data_size)))
                     #下发这些监控信息，得到监控数据中具有的ip
@@ -244,40 +246,41 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
                             #向本地client端发送改变的监控信息
                             send_data(1,client_ip,9997,client_monitor_dic)
                             
-            elif self.data_type.startswith('AssetsDataCollect'):
+            elif self.data_type.startswith('MonitorResultDataCollect'):
                 self.request.send('ReadyToReceiveData')
                 signal_flag = self.data_type.split("|")
                 raw_data_from_client_size = int(signal_flag[1])
-                if raw_data_from_client_size <= 8096:
-                    raw_data_from_client = self.request.recv(8096)
+                print '\033[32;1m result data size is %s\033[0m'%signal_flag[1]
+                if raw_data_from_client_size <= 4096:
+                    raw_data_from_client = self.request.recv(4096)
                 else:
                     raw_data_from_client = receive_data_by_size(self.request,raw_data_from_client_size)
-                print '+++', raw_data_from_client
-                assets_data = json.loads( raw_data_from_client )
+                #print '+++', raw_data_from_client,'+++'
+                monitor_result_data = json.loads( raw_data_from_client )
                 if is_server:
                     #处理收集到的资产信息，分为本地和代理发送过来的。
                     #if client_ip.startswith('10.') or client_ip.startswith('192.168.') or client_ip.startswith('172.[16,31].'):
                     assets_dic={}
                     if signal_flag[2] == 'proxy':
                         #代理的资产数据字典的处理,一个代理
-                        for proxy_ip in assets_data.keys():
+                        for proxy_ip in monitor_result_data.keys():
                             if proxy_ip == client_ip:
                                 host_list=[]
-                                for one_assets_data in assets_data[proxy_ip]:
+                                for one_monitor_result_data in monitor_result_data[proxy_ip]:
                                     #首先要获取有几台主机信息
-                                    client_hostname=one_assets_data['hostname']
+                                    client_hostname=one_monitor_result_data['hostname']
                                     host_list.append(client_hostname)
                                 for host in set(host_list):
                                     assets_dic[client_hostname]={}
                                 
                                 print assets_dic
                                 
-                                for one_assets_data in assets_data[proxy_ip]:
+                                for one_monitor_result_data in monitor_result_data[proxy_ip]:
                                     #这里几条监控数据可能是同一台主机发送的，如何整理
-                                    client_hostname=one_assets_data['hostname']
+                                    client_hostname=one_monitor_result_data['hostname']
                                     #assets_dic.setdefault(client_hostname:{})
                                     #assets_dic={client_hostname:{}}
-                                    for name,service_status in one_assets_data.items():
+                                    for name,service_status in one_monitor_result_data.items():
                                         if type(service_status) is dict:
                                             #说明name!=hostname的其他监控项,添加最后的监控时间
                                             service_status['last_check']=time.time()
@@ -285,62 +288,40 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
                                             print assets_dic
                                     #如果hostname相同怎么吧？？？会重复覆盖，放到里面并？？
                             print assets_dic
-                            
                         #最后处理资产收集到的字典设置
                     else:
-                        #本地的,只是一个资产数据，进行数据基本处理
-                        #{u'cpu_info': {'cpu_basicinfo': [{'cpu_id': u'CPU0', 'NumberOfCores': 2}]}, 'hostname': u'5245','mem_info':{}}
-                        #旧的：{'load': {'status': 1}, 'hostname': 'localhost'}
-                        client_hostname = assets_data['hostname']
-                        assets_dic={client_hostname:{}}
-                        #tmp={}
-                        for name,service_status in assets_data.items():
-                            #if type(service_status) is dict:
-                            #说明name!=hostname的其他监控项,添加最后的监控时间
-                            if name !='hostname':                                
-                                service_status['last_check']=time.time()
-                                #tmp[name]=service_status
-                                assets_dic[client_hostname][name]=service_status
-                        #assets_dic[client_hostname] = tmp
-                        print assets_dic
-                        print "------get conn from %s------\n" %client_hostname
-                    # push status data into JSON file
-                    '''
-                    if client_hostname == 'localhost':
-                        #print redis_connector.r.keys()
-                        redis_connector.r['TriAquae_monitor_status'] = json.dumps(assets_dic)
-                        #redis_connector.r.save()
-                        print 'status inserted into JSON file'
-                    '''
+                        #本地的,只是一个监控状态数据，进行数据基本处理,并将状态信息放到初始字典中
+                        
+                        
+                        for k in monitor_result_data['result_values'].keys():
+                            try:    
+                                monitor_result_data['result_values'][k]['last_check']=time.time()
+                                monitor_result_dic[monitor_result_data['hostname']]['result_values'][k]= monitor_result_data['result_values'][k]
+
+                            except TypeError,err:
+                                pprint(err,'err')
+                                continue 
+                        #monitor_result_dic[monitor_result_data['hostname']]=monitor_result_data
+                        #print '...',monitor_result_data,'...'
+                        print "\033[31;1m------get conn from %s------\033[0m\n" %monitor_result_data['hostname']
+                    print '\033[34;1mmonitor data result is\033[0m'
+                    for k,v in monitor_result_dic.items():
+                        print '\033[34;1mone_result:\033[0m',k,v
                 else:
                     #proxy deal 向服务端发送数据HOST=?,PORT=? is_client=0
                     #把接收client端的数据放到redis中
                     timestemp=time.time()
-                    redis_connector.r[timestemp]=json.dumps(assets_data)
-                    '''
-                    S_HOST='10.168.7.40'
-                    S_PORT=9998
-                    #何时向服务器端发送资产信息？？接到本地资产信息时发送，所有资产信息都收集到
-                    #在之后更新的资产信息时，如何发送？？
-                    client_hostname = client_ip
-                    proxy_assets_dic={}
-                    assets_dic={}
-                    assets_dic[client_hostname]=assets_data
-                    proxy_assets_dic['HOST'].append(assets_dic)
-                    if client_hostname == HOST:
-                        send_data(0,S_HOST,S_PORT,proxy_assets_dic)
-                    '''
-                    '''
-                    for name,service_status in assets_data.items():
-                        #print name,service_status
-                        if type(service_status) is dict:
-                            service_status['last_check'] = time.time()
-                        assets_dic[client_hostname][name] =  service_status
-                    proxy_assets_dic[HOST].append(assets_dic)
-                    '''
+                    redis_connector.r[timestemp]=json.dumps(monitor_result_data)
 
+
+            elif self.data_type.startswith('StatusDataIntoRedis'):
+                timestemp=time.time()
+                redis_connector.r['monitor_status_data']=json.dumps(monitor_result_dic)
+                print '\033[35;1mMonitor Result Data Push Into Redis....\033[0m'
+                self.request.send("StatusDataIntoRedis_OK")
+                print 'OK'
             elif self.data_type == 'CollectStatusIntoJsonFile':
-                print 'CollectStatusIntoJsonFile'
+                print 'CollectStatusIntoJsonFile\n'
             elif self.data_type == 'datasizetest':
                 print 'test'
                 with open('tri_server.py') as f:
@@ -376,8 +357,8 @@ def get_monitor_dic(host,port):
                 print 'proxy client has no monitor data...'
                 req_s.send('get_info')
                 return 0
-            elif int(monitor_data_size) <= 8096:
-                monitor_data = req_s.recv(8096)
+            elif int(monitor_data_size) <= 4096:
+                monitor_data = req_s.recv(4096)
             else:
                 monitor_data =receive_data_by_size(req_s,int(monitor_data_size))
             req_s.send('get_info')
@@ -413,8 +394,8 @@ def send_data(is2client,host,port,data):
                 print 'MonitorDataChange........'
             else:
                 #向server端上传资产数据
-                send_cs.send('AssetsDataCollect'+'|'+str(len(data))+'|'+'proxy')
-                print 'AssetsDataCollect...............'
+                send_cs.send('MonitorResultDataCollect'+'|'+str(len(data))+'|'+'proxy')
+                print 'MonitorResultDataCollect...............'
             transfer_status=send_cs.recv(1024)
             if transfer_status=='ReadyToReceiveData':
                 #向client/server host端发送该主机监控数据/或资产数据
@@ -445,15 +426,14 @@ if __name__ == "__main__":
             if a in ('agent','proxy','trunk_server'):
                 #global is_server
                 #print a
+                conf.proxy_server=True
                 is_server=0 #True
                 S_HOST='10.168.7.105'
                 S_PORT=9998
                 #表示为代理服务,连接主server,得到监控数据
                 get_monitor_dic(S_HOST,S_PORT)
         else:
-                   print '--------------------------server starting--------------------'
-
-if __name__ == "__main__":
+               print '--------------------------server starting--------------------'
     HOST, PORT = "0.0.0.0", 9998
     # Create the server, binding to localhost on port 9998
     try:
@@ -463,5 +443,3 @@ if __name__ == "__main__":
         print 'prass ctrl+c,break'
         server.server_close()
         sys.exit()
-    
-

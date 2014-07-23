@@ -86,8 +86,8 @@ def send_data(is2client,host,port,data):
                 print 'MonitorDataChange........'
             else:
                 #向server端上传资产数据
-                send_cs.send('AssetsDataCollect'+'|'+str(len(data))+'|'+'proxy')
-                print 'AssetsDataCollect...............'
+                send_cs.send('MonitorResultDataCollect'+'|'+str(len(data))+'|'+'proxy')
+                print 'MonitorResultDataCollect...............'
             transfer_status=send_cs.recv(1024)
             if transfer_status=='ReadyToReceiveData':
                 #向client/server host端发送该主机监控数据/或资产数据

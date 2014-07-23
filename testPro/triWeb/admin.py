@@ -54,7 +54,7 @@ class TemplatesAdmin(admin.ModelAdmin):
 
 class ServicesAdmin(admin.ModelAdmin):
     list_display = ('name', 'monitor_type','check_interval')
-    filter_horizontal = ('item_list','trigger_list')
+    filter_horizontal = ('item_list',)
 class ItemsAdmin(admin.ModelAdmin):
     list_display = ('name','key','data_type','enabled')
 
@@ -69,7 +69,7 @@ class StatusAdmin(admin.ModelAdmin):
     list_display = ('host','host_status','ping_status','availability','host_uptime','breakdown_count','up_count','attempt_count')
 
 class TriggersAdmin(admin.ModelAdmin):
-	list_display = ('name', 'serverity')
+	list_display = ('name',)
 class QuickLinkAdmin(admin.ModelAdmin):
 	list_display = ('link_name','url','color')
 #class GroupAdmin(admin.ModelAdmin):

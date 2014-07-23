@@ -212,15 +212,16 @@ class services(models.Model):  #services list
     monitor_type = models.CharField(max_length=50, choices=monitor_type_list)
     plugin = models.CharField(max_length=100) 
     item_list = models.ManyToManyField('items')
-    trigger_list = models.ManyToManyField('triggers',blank=True)
+    #trigger_list = models.ManyToManyField('triggers',blank=True)
+    trigger = models.ForeignKey('triggers', null=True,blank=True)
     check_interval = models.IntegerField(default=300)
     #flexible_intervals = 
     def __unicode__(self):
-        return self.name    
+        return self.name
 
 class items(models.Model): # monitor item
     name = models.CharField(max_length=50, unique=True)
-    key = models.CharField(max_length=50)
+    key = models.CharField(max_length=100,unique=True)
     data_type_option = (('float','Float'),('string','String'),('integer', 'Integer') ) 
     data_type = models.CharField(max_length=50, choices=data_type_option)
     unit = models.CharField(max_length=30,default='%')
@@ -230,14 +231,17 @@ class items(models.Model): # monitor item
 
 class triggers(models.Model): 
     name = models.CharField(max_length=50,unique=True)
-    expression = models.CharField(max_length=150)
+    expression = models.TextField()
+    #expression = models.CharField(max_length=1000)
     description = models.CharField(max_length=100)
+    '''
     serverity_list = (('information','Information'),
                        ( 'warning' ,'Warning'),
                        ('critical', 'Critical'),
                        ('urgent','Urgent'),
                        ('disaster','Disaster') )
     serverity = models.CharField(max_length=30, choices=serverity_list)
+    '''
     #dependencies 
     def __unicode__(self):
         return self.name

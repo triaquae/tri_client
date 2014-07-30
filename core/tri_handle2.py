@@ -50,8 +50,8 @@ def push_status_data(host,port):
             status=psh_s.recv(1024)
             if status == "StatusDataIntoRedis_OK":
                 return pull_status_data()
-            else:
-                pass
+            else:#error must happened. 
+                pprint(status,'err',exit=1)
     except socket.error:
         
         pprint(socket.error, 'err',exit=1)
@@ -80,7 +80,7 @@ def trigger_handle(**kargs):
 
         #'Warning':[{'item_key':'iowait','operator':'>','value':'80','logic':"else", 'handler': 'sum', 'mintues':10},{'item_key':'idle','operator':'<','value':'60','logic':None,'handler': 'sum', 'mintues':10}],
         for key,conditions in expression.items():#loop each trigger list 
-            #print '--$-->',key ,conditions
+            print '--$-->',key ,conditions
             
             
             #print '--------------------------in looop --------------2'
@@ -130,7 +130,7 @@ print latest_monitor_data
 
 
 
-if isinstance(monitor_dic,dict):
+if isinstance(latest_monitor_data,dict):
     #loop each host from DB 
     for h,value in monitor_dic.items():
         print '\033[42;1m %s \033[0m' %h
@@ -140,6 +140,7 @@ if isinstance(monitor_dic,dict):
             for service_key, service_obj in value['service'].items():
                 print service_key, service_obj.check_interval, service_obj.trigger
                 client_service_data = latest_monitor_data[h]['result_values'][service_key]
+                print '++++|||',client_service_data
                 #check if this service links to any trigger
                 if service_obj.trigger: 
                     #go through trigger expression first 
@@ -160,4 +161,5 @@ if isinstance(monitor_dic,dict):
                 """
         else: #no monitor data for this host , definitely something went wrong
             pprint("No monitor data for this host!" , 'err')
-            
+else:
+    pprint('No ')

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #-*- coding:utf-8 -*-
 import SocketServer,socket,time
-import pickle,json
+import pickle,json,redis
 import os,commands,stat
 from hashlib import md5
 import db_connector
@@ -303,9 +303,12 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
                         #monitor_result_dic[monitor_result_data['hostname']]=monitor_result_data
                         #print '...',monitor_result_data,'...'
                         print "\033[31;1m------get conn from %s------\033[0m\n" %monitor_result_data['hostname']
-                    print '\033[34;1mmonitor data result is\033[0m'
-                    for k,v in monitor_result_dic.items():
-                        print '\033[34;1mone_result:\033[0m',k,v
+                        #print monitor_result_data
+                        for k,v in monitor_result_data['result_values'].items():
+                            print '\033[32;1m %s \033[0m' %k,v
+                    #print '\033[34;1mmonitor data result is\033[0m'
+                    #for k,v in monitor_result_dic.items():
+                    #    print '\033[34;1mone_result:\033[0m',k,v
                 else:
                     #proxy deal 向服务端发送数据HOST=?,PORT=? is_client=0
                     #把接收client端的数据放到redis中
@@ -315,10 +318,15 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
 
             elif self.data_type.startswith('StatusDataIntoRedis'):
                 timestemp=time.time()
-                redis_connector.r['monitor_status_data']=json.dumps(monitor_result_dic)
-                print '\033[35;1mMonitor Result Data Push Into Redis....\033[0m'
-                self.request.send("StatusDataIntoRedis_OK")
-                print 'OK'
+                try:
+                    redis_connector.r['monitor_status_data']=json.dumps(monitor_result_dic)
+                    print '\033[35;1mMonitor Result Data Push Into Redis....\033[0m'
+                    self.request.send("StatusDataIntoRedis_OK")
+                    print 'OK'
+                except redis.exceptions.ConnectionError,e:
+                    self.request.send(str(e))
+                    print e
+                
             elif self.data_type == 'CollectStatusIntoJsonFile':
                 print 'CollectStatusIntoJsonFile\n'
             elif self.data_type == 'datasizetest':
@@ -437,6 +445,7 @@ if __name__ == "__main__":
     # Create the server, binding to localhost on port 9998
     try:
         server = SocketServer.ThreadingTCPServer((HOST, PORT), MyTCPHandler)
+        server.allow_reuse_address = True
         server.serve_forever()
     except KeyboardInterrupt:
         print 'prass ctrl+c,break'

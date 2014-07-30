@@ -1,0 +1,67 @@
+                'Information':[],
+                'Warning':[{'item_key':'mem_free','operator':'<','value':'30','logic':'||','handler': 'avg', 'mintues':5},{'item_key':'mem_usage','operator':'>','value':'70','logic':None,'handler': 'avg', 'mintues':5}],
+                'Problem':[{'item_key':'mem_free','operator':'<','value':'15','logic':'else','handler': 'avg', 'mintues':5},{'item_key':'mem_usage','operator':'>','value':'85','logic':None,'handler': 'avg', 'mintues':5}],
+                'Urgent':[],
+                'Disaster':[{'item_key':'mem_free','operator':'<','value':'10','logic':'&','handler': 'avg', 'mintues':5},{'item_key':'mem_usage','operator':'<','value':'90','logic':None,'handler': 'avg', 'mintues':5}]
+                
+                
+                serverity_list = [ disaster， urgent, problem, warning, info]
+                for serverity in serverity_list: #依次循环状态等级列表
+                    #循环每个等级下面的小列表，为了保证循环顺序，列表下每个item都是一个小字典，包含着判断条件
+                    for i in serverity:
+                        #每个i都是一个小字典 ex. {'item_key':'mem_free','operator':'<','value':'30','logic':'||','handler': 'avg', 'mintues':5}
+                        for k,v in i.items():
+                            #先确定如何处理数据， 取得handler ,
+                            #把数据传给相应handler函数，取返回值
+                            
+                            if operator == '>' :                                 
+                                if handler_return_value > value
+                                   #此时先检查这个判断条件字典与下一个字典的关系，如果是else的关系，代表此条件不满足也没关系，如果是AND，在此就可以BREAK了，
+                                   #
+                                   #alert ....
+                            elif operator == '<':
+                                if handler_return_value < value
+                                    #alert 
+                                    #此时先检查这个判断条件字典与下一个字典的关系，如果是else的关系，代表此条件不满足也没关系，如果是AND，在此就可以BREAK了，
+                            elif operator == '=':
+                                if handler_return_value == value
+                                    #alert  
+                                    #此时先检查这个判断条件字典与下一个字典的关系，如果是else的关系，代表此条件不满足也没关系，如果是AND，在此就可以BREAK了，
+                        
+                    #如果这个severity 条件都满足了，就不再往下走了，直接设定这个服务为这个severity, 然后交给alert_center来决定是否需要报警
+                    
+                    #最后别忘记把数据写入redis 保存，以做画图使用
+                    
+                            #
+                            
+
+handler 目前包括
+#得到某段时间的平均值
+def avg(itime=5):
+    pass 最近5分钟平均值
+    
+
+def change(itime=0):
+    pass 最近时间内是否有变化
+
+def diff(itime=0):
+    pass 是否与上次不一样
+
+def last(itime=0)
+    pass  取最新的值
+
+def max(itime=#3)
+    pass  最近3分钟内最大值
+
+def min(itime=10)
+    pass 最近10分钟内最小值
+
+def nodata(itime=10)
+    pass   最近10分钟无数据
+    
+def sum(itime=10)
+    pass    最近10分钟数据之和
+    
+def as_is():
+    pass    不对数据做处理，按原格式
+    

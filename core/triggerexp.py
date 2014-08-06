@@ -47,20 +47,29 @@ memtrigger_dic2={
 }
 memtrigger_dic={
                 'Information':[],
-                'Warning':[{'item_key':'mem_free','operator':'<','value':'30','logic':'||','handler': 'avg', 'mintues':5},{'item_key':'mem_usage','operator':'>','value':'70','logic':None,'handler': 'avg', 'mintues':5}],
-                'Problem':[{'item_key':'mem_free','operator':'<','value':'15','logic':'else','handler': 'avg', 'mintues':5},{'item_key':'mem_usage','operator':'>','value':'85','logic':None,'handler': 'avg', 'mintues':5}],
+                'Warning':[{'item_key':'MemFree','operator':'<','value':'30','logic':'||','handler': 'avg', 'mintues':5},{'item_key':'MemUsage','operator':'>','value':'70','logic':None,'handler': 'avg', 'mintues':5}],
+                'Problem':[{'item_key':'MemFree','operator':'<','value':'15','logic':'else','handler': 'avg', 'mintues':5},{'item_key':'MemUsage','operator':'>','value':'85','logic':None,'handler': 'avg', 'mintues':5}],
                 'Urgent':[],
-                'Disaster':[{'item_key':'mem_free','operator':'<','value':'10','logic':'&','handler': 'avg', 'mintues':5},{'item_key':'mem_usage','operator':'<','value':'90','logic':None,'handler': 'avg', 'mintues':5}]
+                'Disaster':[{'item_key':'MemFree','operator':'<','value':'10','logic':'&','handler': 'avg', 'mintues':5},{'item_key':'MemUsage','operator':'<','value':'90','logic':None,'handler': 'avg', 'mintues':5}]
 }
-                
-print json.dumps(triggerexp_dic2)
-print json.dumps(memtrigger_dic2)
+     
+cputrigger_dic = {
+    'Information': [],
+    'Warning': [],
+    'Problem':  [{'item_key':'idle','operator':'<','value':'15','logic':'AND','handler': 'avg', 'mintues':5},{'item_key':'iowait','operator':'>','value':'85','logic':'OR','handler': 'avg', 'mintues':5}, {'item_key':'system','operator':'>','value':'80','logic':None,'handler': 'avg', 'mintues':5}],
+    'Urgent': [],
+    'Disaster':[]
+}
+     
+#print json.dumps(triggerexp_dic2)
+print json.dumps(memtrigger_dic)
+print json.dumps(cputrigger_dic)
 
-if eval(triggerexp_dic['Warning']['value'] + triggerexp_dic['Warning']['operator'] + '85'):
+"""if eval(triggerexp_dic['Warning']['value'] + triggerexp_dic['Warning']['operator'] + '85'):
     print 1
 else:
     print 2
-                
+"""                
                
 #得到trigger表达式字典
 '''

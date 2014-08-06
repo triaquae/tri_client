@@ -11,7 +11,7 @@ import time,pickle,subprocess
 import redis_connector
 import socket
 import key_gen,random_pass
-import sys
+import sys,trigger_formulas
 from utils import pprint 
 monitor_result_dic={}
 #get all hosts' monitor configuration out from DB 
@@ -42,7 +42,7 @@ def push_status_data(host,port):
         RSA_signal,random_num = 'RSA_KEY_Virification', str(random_pass.randomPassword(10))
         encrypted_data = key_gen.RSA_key.encrypt_RSA(key_gen.public_file,random_num)
         psh_s.sendall(json.dumps( (RSA_signal,encrypted_data, random_num) )) 
-        print '\033[34;1m sending status to Monitor server .... \033[0m' 
+        print '\033[34;1m Pulling the latest monitor data from SocketServer......\033[0m'
         #判断RSA认证结果
         RSA_status=psh_s.recv(1024)
         if RSA_status == 'RSA_OK':
@@ -59,23 +59,81 @@ def push_status_data(host,port):
         #sys.exit("Socket connect error")
     finally:
         psh_s.close()
-        
+
+#处理具体的每一个服务，最终返回一个Severity状态
+def trigger_condition_handle(formulas, data):
+    '''formulas : trigger formula 
+        data: monitor data of this service 
+    '''
+    print '--->',formulas, data
+    for formula in formulas:
+        #先判断handler方法，然后判断operator 
+        handle_func = getattr(trigger_formulas, formula['handler'] )
+        formated_value = handle_func(formula['mintues'], data[formula['item_key']] )
+        print ':::::formated val;  key: %s   trigger_value: %s   val: %s ' %(formula['item_key'],formula['value'],formated_value )
+        if formula['logic'] == 'AND':  #跟下一条的关系
+            #确定operator 
+            if formula['operator'] == '>': #按大于处理
+                if float(formated_value) > float(formula['value']): #满足条件, 因为是AND，这条满足了，跳到下一条  #代表超过阀值
+                    print '\033[31;1m:::Statisfied:\033[0m', float(formated_value), formula['operator'], float(formula['value'] )
+                    continue
+                else: #不满足，直接跳出并设定 问题为这个级别就好了
+                    print '\033[32;1m:::not Statisfied: break and got next level\033[0m' , formated_value, formula['operator'], formula['value']
+                    break
+                    
+            elif formula['operator'] == '<': #按小于处理
+                if formula['operator'] == '<': #按大于处理
+                    if float(formated_value) < float(formula['value']): #满足条件, 因为是AND，这条满足了，跳到下一条
+                        print '\033[31;1m:::Statisfied:\033[0m', float(formated_value), formula['operator'], float(formula['value'] )
+                        continue
+                    else: #不满足，直接跳出并设定 问题为这个级别就好了
+                        print '\033[32;1m:::not Statisfied: break and got next level\033[0m' , formated_value, formula['operator'], formula['value']
+                        break
+                        
+            elif formula['operator'] == '=' :
+                pass 
+                
+        elif formula['logic'] == 'OR':
+            print 'Pass OR right now ....' #pass
 def trigger_handle(**kargs):
     '''kargs:  
     obj=  service configuration 
     service_data =  real monitored service data from client
     '''
     severity = ['Disaster', 'Urgent', 'Problem', 'Warning', 'Information'] 
-    #print '\033[43;1m---trigger---\033[0m'  #, kargs
+    #print '\033[43;1m---trigger---\033[0m'  , kargs
     if not kargs.has_key('obj'):pprint('Lack of service configration data','err')
     if not kargs.has_key('service_data'):pprint('Lack of service data','err')
     
     expression = json.loads(kargs['obj'].trigger.expression)
+    
+    print kargs['service_data']
+    
+    #按severity顺序循环trigger字典，
+    for s in severity:
+        print '\033[35;1m%s\033[0m' %s , expression[s]
+        #循环每个 级别 的 condition列表
+        
+        logic_counter = 1
+        for condition_item in expression[s]:
+            #循环每个condition_item
+            
+            print '-------------------------------------Logic:',logic_counter
+            
+            for k,v in condition_item.items():
+                print '\t', k, ':', v
+                #先获取监控数据值，然后按照handler 和operator 方式处理
+                if k == 'item_key':
+                    print '\tMonitorValue: \033[32;1m%s\033[0m ' %kargs['service_data'].get(v)
+                
+            logic_counter +=1
+        #直接把一个级别的公式传给trigger_condition_handle 处理
+        trigger_condition_handle(formulas=expression[s], data=kargs['service_data'] )
     #for k,v in expression.items():
     #    print k,v
     #
     #print '--------------------------in looop --------------'
-    for s in severity:
+    """for s in severity:
         #print '\033[41;1m ---%s ----\033[0m'%s 
 
         #'Warning':[{'item_key':'iowait','operator':'>','value':'80','logic':"else", 'handler': 'sum', 'mintues':10},{'item_key':'idle','operator':'<','value':'60','logic':None,'handler': 'sum', 'mintues':10}],
@@ -121,12 +179,12 @@ def trigger_handle(**kargs):
                                 break
                         else:
                             print 'no match'
-                    
+    """                
 
 server_ip,port  = '10.168.7.161',9998
-latest_monitor_data = push_status_data(server_ip, port)
+latest_monitor_data = push_status_data(server_ip, port)  #从redis中取出最新的监控数据
 
-print latest_monitor_data
+#print latest_monitor_data
 
 
 
@@ -138,27 +196,19 @@ if isinstance(latest_monitor_data,dict):
         if latest_monitor_data.has_key(h): #make sure host is in the lastest monitor data
             #loop each service in this host 
             for service_key, service_obj in value['service'].items():
-                print service_key, service_obj.check_interval, service_obj.trigger
-                client_service_data = latest_monitor_data[h]['result_values'][service_key]
-                print '++++|||',client_service_data
+                print '\033[41;1mservice_key:  %s  \033[0m check_interval: %s  trigger: %s '%( service_key, service_obj.check_interval, service_obj.trigger)
+                client_service_data = latest_monitor_data[h]['result_values'][service_key] #取出具体服务的最新监控数据
+                #print '++++|||',client_service_data
                 #check if this service links to any trigger
                 if service_obj.trigger: 
                     #go through trigger expression first 
+                    #print 'Trigger:', service_obj.trigger.expression 
+                    # 交给trigger_handle 按trigger expression中的规则处理此服务的监控数据
                     trigger_handle(obj= service_obj, service_data =client_service_data )
                     #print service_obj.trigger.name
                 else: #if not trigger links , only store the data in redis
-                    print 'will save this data to redis later', service_key
-                #loop each item in this service
-                """for item in service_obj.item_list.values():
-                    #print item
-                    #only go through it when it's enabled 
-                    if item['enabled']:
-                        
-                        #compare the item key with the data sent by client 
-                        client_item_key = latest_monitor_data[h]['result_values'][service_key]
-                        #print client_item_key.get(item['key']), item['key']
-                        trigger_handle(obj= service_obj,item_key=item['key'] , clien_item_data = client_item_key )
-                """
+                    print 'no triiger for \033[31;1m%s\033[0m  will save this data to redis later' %service_key
+
         else: #no monitor data for this host , definitely something went wrong
             pprint("No monitor data for this host!" , 'err')
 else:

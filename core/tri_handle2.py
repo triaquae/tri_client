@@ -65,7 +65,7 @@ def trigger_condition_handle(formulas, data):
     '''formulas : trigger formula 
         data: monitor data of this service 
     '''
-    print '--->',formulas, data
+    #print '--->',formulas, data
     for formula in formulas:
         #先判断handler方法，然后判断operator 
         handle_func = getattr(trigger_formulas, formula['handler'] )
@@ -75,19 +75,19 @@ def trigger_condition_handle(formulas, data):
             #确定operator 
             if formula['operator'] == '>': #按大于处理
                 if float(formated_value) > float(formula['value']): #满足条件, 因为是AND，这条满足了，跳到下一条  #代表超过阀值
-                    print '\033[31;1m:::Statisfied:\033[0m', float(formated_value), formula['operator'], float(formula['value'] )
+                    print '\033[31;1m:::Statisfied:   logic: AND , so Continue\033[0m', float(formated_value), formula['operator'], float(formula['value'] )
                     continue
                 else: #不满足，直接跳出并设定 问题为这个级别就好了
-                    print '\033[32;1m:::not Statisfied: break and got next level\033[0m' , formated_value, formula['operator'], formula['value']
+                    print '\033[32;1m:::not Statisfied: logic: AND ,so break and got next level\033[0m' , formated_value, formula['operator'], formula['value']
                     break
                     
             elif formula['operator'] == '<': #按小于处理
                 if formula['operator'] == '<': #按大于处理
                     if float(formated_value) < float(formula['value']): #满足条件, 因为是AND，这条满足了，跳到下一条
-                        print '\033[31;1m:::Statisfied:\033[0m', float(formated_value), formula['operator'], float(formula['value'] )
+                        print '\033[31;1m:::Statisfied:  logic: AND , so Continue \033[0m', float(formated_value), formula['operator'], float(formula['value'] )
                         continue
                     else: #不满足，直接跳出并设定 问题为这个级别就好了
-                        print '\033[32;1m:::not Statisfied: break and got next level\033[0m' , formated_value, formula['operator'], formula['value']
+                        print '\033[32;1m:::not Statisfied: logic: AND , break and got next level\033[0m' , formated_value, formula['operator'], formula['value']
                         break
                         
             elif formula['operator'] == '=' :

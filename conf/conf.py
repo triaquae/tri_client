@@ -1,8 +1,8 @@
 #/usr/bin/python
 # -*- coding:utf-8 -*-
 
-#标识是否为代理服务
+#mark it is proxy or not
 proxy_server = 0
 
-server_master = '192.168.1.115'
-port = 7001
+server_ip = '192.168.1.115'
+server_port = 9998

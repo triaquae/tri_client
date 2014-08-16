@@ -8,7 +8,10 @@ import db_connector
 import redis_connector 
 from triWeb.models import IP
 import get_config
+import conf.conf
 recv_dir = 'recv/'
+server_ip = conf.conf.server_ip
+server_port = conf.conf.server_port
 
 #server_address = '10.168.70.231'
 block_list = []
@@ -24,13 +27,14 @@ from get_monitor_dic import *
 import socket
 myname = socket.getfqdn(socket.gethostname())
 myaddr = socket.gethostbyname(myname)
-monitor_result_dic=get_monitor_empty_dic('192.168.1.130')
+monitor_result_dic=get_monitor_empty_dic(server_ip)
 #monitor_result_dic=get_monitor_empty_dic(myaddr)
 
 
 is_server = 1 #False
 print monitor_result_dic
-import conf.conf
+
+
 
 def pprint(msg,msg_type, exit=0):
     if sys.platform.startswith("win"):
@@ -435,13 +439,13 @@ if __name__ == "__main__":
                 #print a
                 conf.proxy_server=True
                 is_server=0 #True
-                S_HOST='10.168.7.105'
-                S_PORT=9998
+                S_HOST=server_ip
+                S_PORT=server_port
                 #表示为代理服务,连接主server,得到监控数据
                 get_monitor_dic(S_HOST,S_PORT)
         else:
                print '--------------------------server starting--------------------'
-    HOST, PORT = "0.0.0.0", 9998
+    HOST, PORT = server_ip, server_port
     # Create the server, binding to localhost on port 9998
     try:
         server = SocketServer.ThreadingTCPServer((HOST, PORT), MyTCPHandler)

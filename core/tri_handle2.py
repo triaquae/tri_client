@@ -14,17 +14,19 @@ import key_gen,random_pass
 import sys,trigger_formulas
 from utils import pprint 
 monitor_result_dic={}
+server_ip = conf.server_ip
+server_port = conf.server_port
 #get all hosts' monitor configuration out from DB 
-monitor_dic=  get_all_host_monitor_dic('192.168.1.130')
+monitor_dic=  get_all_host_monitor_dic(server_ip)
 
 print '----------->', monitor_dic
-#»ñÈ¡redisÖÐµÄÊý¾Ý
+#ï¿½ï¿½È¡redisï¿½Ðµï¿½ï¿½ï¿½ï¿½
 def pull_status_data():
     #pull out status data from Redis
     #monitor_status_dic = redis_connector.r.get('monitor_status_data')
     r=redis_connector.get_redis()
     monitor_status_dic = r.get('monitor_status_data')
-    #È¡µ½µ½Çå³ý¸ÃÊý¾Ý
+    #È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     #redis_connector.r.delete('monitor_status_data')
     if monitor_status_dic is not None:
         monitor_status_dic = json.loads(monitor_status_dic)
@@ -33,7 +35,7 @@ def pull_status_data():
         return "No monitor data found in Redis,please check..."
         #sys.exit("No monitor data found in Redis,please check")
 
-#Í¨Öªserver/proxy_server¶Ë½«×´Ì¬Êý¾Ý´æÈëµ½±¾µØredisÖÐ£¬²¢»ñÈ¡redisÖÐµÄ×´Ì¬Êý¾Ý
+#Í¨Öªserver/proxy_serverï¿½Ë½ï¿½×´Ì¬ï¿½ï¿½Ý´ï¿½ï¿½ëµ½ï¿½ï¿½ï¿½ï¿½redisï¿½Ð£ï¿½ï¿½ï¿½ï¿½ï¿½È¡redisï¿½Ðµï¿½×´Ì¬ï¿½ï¿½ï¿½
 def push_status_data(host,port):
     try:
         #connect server let the status data into redis
@@ -43,7 +45,7 @@ def push_status_data(host,port):
         encrypted_data = key_gen.RSA_key.encrypt_RSA(key_gen.public_file,random_num)
         psh_s.sendall(json.dumps( (RSA_signal,encrypted_data, random_num) )) 
         print '\033[34;1m Pulling the latest monitor data from SocketServer......\033[0m'
-        #ÅÐ¶ÏRSAÈÏÖ¤½á¹û
+        #ï¿½Ð¶ï¿½RSAï¿½ï¿½Ö¤ï¿½ï¿½ï¿½
         RSA_status=psh_s.recv(1024)
         if RSA_status == 'RSA_OK':
             psh_s.send('StatusDataIntoRedis')
@@ -60,33 +62,33 @@ def push_status_data(host,port):
     finally:
         psh_s.close()
 
-#´¦Àí¾ßÌåµÄÃ¿Ò»¸ö·þÎñ£¬×îÖÕ·µ»ØÒ»¸öSeverity×´Ì¬
+#ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã¿Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Õ·ï¿½ï¿½ï¿½Ò»ï¿½ï¿½Severity×´Ì¬
 def trigger_condition_handle(formulas, data):
     '''formulas : trigger formula 
         data: monitor data of this service 
     '''
     #print '--->',formulas, data
     for formula in formulas:
-        #ÏÈÅÐ¶Ïhandler·½·¨£¬È»ºóÅÐ¶Ïoperator 
+        #ï¿½ï¿½ï¿½Ð¶ï¿½handlerï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È»ï¿½ï¿½ï¿½Ð¶ï¿½operator 
         handle_func = getattr(trigger_formulas, formula['handler'] )
         formated_value = handle_func(formula['mintues'], data[formula['item_key']] )
         print ':::::formated val;  key: %s   trigger_value: %s   val: %s ' %(formula['item_key'],formula['value'],formated_value )
-        if formula['logic'] == 'AND':  #¸úÏÂÒ»ÌõµÄ¹ØÏµ
-            #È·¶¨operator 
-            if formula['operator'] == '>': #°´´óÓÚ´¦Àí
-                if float(formated_value) > float(formula['value']): #Âú×ãÌõ¼þ, ÒòÎªÊÇAND£¬ÕâÌõÂú×ãÁË£¬Ìøµ½ÏÂÒ»Ìõ  #´ú±í³¬¹ý·§Öµ
+        if formula['logic'] == 'AND':  #ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½Ä¹ï¿½Ïµ
+            #È·ï¿½ï¿½operator 
+            if formula['operator'] == '>': #ï¿½ï¿½ï¿½ï¿½ï¿½Ú´ï¿½ï¿½ï¿½
+                if float(formated_value) > float(formula['value']): #ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½, ï¿½ï¿½Îªï¿½ï¿½ANDï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë£ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½  #ï¿½ï¿½?ï¿½ï¿½Öµ
                     print '\033[31;1m:::Statisfied:   logic: AND , so Continue\033[0m', float(formated_value), formula['operator'], float(formula['value'] )
                     continue
-                else: #²»Âú×ã£¬Ö±½ÓÌø³ö²¢Éè¶¨ ÎÊÌâÎªÕâ¸ö¼¶±ð¾ÍºÃÁË
+                else: #ï¿½ï¿½ï¿½ï¿½ï¿½ã£¬Ö±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½è¶¨ ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Íºï¿½ï¿½ï¿½
                     print '\033[32;1m:::not Statisfied: logic: AND ,so break and got next level\033[0m' , formated_value, formula['operator'], formula['value']
                     break
                     
-            elif formula['operator'] == '<': #°´Ð¡ÓÚ´¦Àí
-                if formula['operator'] == '<': #°´´óÓÚ´¦Àí
-                    if float(formated_value) < float(formula['value']): #Âú×ãÌõ¼þ, ÒòÎªÊÇAND£¬ÕâÌõÂú×ãÁË£¬Ìøµ½ÏÂÒ»Ìõ
+            elif formula['operator'] == '<': #ï¿½ï¿½Ð¡ï¿½Ú´ï¿½ï¿½ï¿½
+                if formula['operator'] == '<': #ï¿½ï¿½ï¿½ï¿½ï¿½Ú´ï¿½ï¿½ï¿½
+                    if float(formated_value) < float(formula['value']): #ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½, ï¿½ï¿½Îªï¿½ï¿½ANDï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë£ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½
                         print '\033[31;1m:::Statisfied:  logic: AND , so Continue \033[0m', float(formated_value), formula['operator'], float(formula['value'] )
                         continue
-                    else: #²»Âú×ã£¬Ö±½ÓÌø³ö²¢Éè¶¨ ÎÊÌâÎªÕâ¸ö¼¶±ð¾ÍºÃÁË
+                    else: #ï¿½ï¿½ï¿½ï¿½ï¿½ã£¬Ö±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½è¶¨ ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Íºï¿½ï¿½ï¿½
                         print '\033[32;1m:::not Statisfied: logic: AND , break and got next level\033[0m' , formated_value, formula['operator'], formula['value']
                         break
                         
@@ -109,25 +111,25 @@ def trigger_handle(**kargs):
     
     print kargs['service_data']
     
-    #°´severityË³ÐòÑ­»·trigger×Öµä£¬
+    #ï¿½ï¿½severityË³ï¿½ï¿½Ñ­ï¿½ï¿½triggerï¿½Öµä£¬
     for s in severity:
         print '\033[35;1m%s\033[0m' %s , expression[s]
-        #Ñ­»·Ã¿¸ö ¼¶±ð µÄ conditionÁÐ±í
+        #Ñ­ï¿½ï¿½Ã¿ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ conditionï¿½Ð±ï¿½
         
         logic_counter = 1
         for condition_item in expression[s]:
-            #Ñ­»·Ã¿¸öcondition_item
+            #Ñ­ï¿½ï¿½Ã¿ï¿½ï¿½condition_item
             
             print '-------------------------------------Logic:',logic_counter
             
             for k,v in condition_item.items():
                 print '\t', k, ':', v
-                #ÏÈ»ñÈ¡¼à¿ØÊý¾ÝÖµ£¬È»ºó°´ÕÕhandler ºÍoperator ·½Ê½´¦Àí
+                #ï¿½È»ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½È»ï¿½ï¿½ï¿½ï¿½handler ï¿½ï¿½operator ï¿½ï¿½Ê½ï¿½ï¿½ï¿½ï¿½
                 if k == 'item_key':
                     print '\tMonitorValue: \033[32;1m%s\033[0m ' %kargs['service_data'].get(v)
                 
             logic_counter +=1
-        #Ö±½Ó°ÑÒ»¸ö¼¶±ðµÄ¹«Ê½´«¸øtrigger_condition_handle ´¦Àí
+        #Ö±ï¿½Ó°ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¹ï¿½Ê½ï¿½ï¿½ï¿½ï¿½trigger_condition_handle ï¿½ï¿½ï¿½ï¿½
         trigger_condition_handle(formulas=expression[s], data=kargs['service_data'] )
     #for k,v in expression.items():
     #    print k,v
@@ -181,8 +183,8 @@ def trigger_handle(**kargs):
                             print 'no match'
     """                
 
-server_ip,port  = '192.168.1.130',9998
-latest_monitor_data = push_status_data(server_ip, port)  #´ÓredisÖÐÈ¡³ö×îÐÂµÄ¼à¿ØÊý¾Ý
+server_ip,port  = server_ip,server_port
+latest_monitor_data = push_status_data(server_ip, port)  #ï¿½ï¿½redisï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ÂµÄ¼ï¿½ï¿½ï¿½ï¿½ï¿½
 
 #print latest_monitor_data
 
@@ -197,13 +199,13 @@ if isinstance(latest_monitor_data,dict):
             #loop each service in this host 
             for service_key, service_obj in value['service'].items():
                 print '\033[41;1mservice_key:  %s  \033[0m check_interval: %s  trigger: %s '%( service_key, service_obj.check_interval, service_obj.trigger)
-                client_service_data = latest_monitor_data[h]['result_values'][service_key] #È¡³ö¾ßÌå·þÎñµÄ×îÐÂ¼à¿ØÊý¾Ý
+                client_service_data = latest_monitor_data[h]['result_values'][service_key] #È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Â¼ï¿½ï¿½ï¿½ï¿½ï¿½
                 #print '++++|||',client_service_data
                 #check if this service links to any trigger
                 if service_obj.trigger: 
                     #go through trigger expression first 
                     #print 'Trigger:', service_obj.trigger.expression 
-                    # ½»¸øtrigger_handle °´trigger expressionÖÐµÄ¹æÔò´¦Àí´Ë·þÎñµÄ¼à¿ØÊý¾Ý
+                    # ï¿½ï¿½ï¿½ï¿½trigger_handle ï¿½ï¿½trigger expressionï¿½ÐµÄ¹ï¿½ï¿½ï¿½ï¿½ï¿½Ë·ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½ï¿½ï¿½
                     trigger_handle(obj= service_obj, service_data =client_service_data )
                     #print service_obj.trigger.name
                 else: #if not trigger links , only store the data in redis

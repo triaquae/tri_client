@@ -1,5 +1,7 @@
 # -*- coding:utf-8 -*-
 # Monitoring  client program
+import client_conf
+
 import conf,json,threading
 import socket,time,sys
 import plugins,key_gen,random_pass
@@ -7,15 +9,22 @@ import plugin_conf
 import commands
 import importlib
 from monitor_data_deal import *
-HOST = '192.168.1.130'    # The remote host
-PORT = 9998             # The same port as used by the server
-hostname = 'ztp_test'
+
+server_ip = client_conf.server_ip
+server_port = client_conf.server_port
+agent_id = client_conf.client_id
+HOST = server_ip    # The remote host
+PORT = server_port          # The same port as used by the server
+hostname = agent_id
 status_dic = {'services': {}}
 last_check_dic = {}
 interval_dic = {}
 
 monitor_file_md5=0
 conf.BASE_DIR
+print "dfdff"
+print conf.BASE_DIR
+print "afdfsdf"
 
 def pprint(msg,msg_type):
     if sys.platform.startswith("win"):
@@ -80,8 +89,11 @@ def revc_data_by_size(sock,size):
     
 def get_monitor_dic():
     '''第一次连接时，请求得到自己的监控项数据'''
+    
     try:
+        
         req_s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        
         req_s.connect((HOST, PORT))
         RSA_signal,random_num = 'RSA_KEY_Virification', str(random_pass.randomPassword(10))
         encrypted_data = key_gen.RSA_key.encrypt_RSA(key_gen.public_file,random_num)

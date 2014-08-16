@@ -10,7 +10,7 @@ from triWeb.models import IP
 import get_config
 recv_dir = 'recv/'
 
-#server_address = '192.168.2.248'
+#server_address = '10.168.70.231'
 block_list = []
 
 import get_monitor_dic_fromDB
@@ -24,7 +24,7 @@ from get_monitor_dic import *
 import socket
 myname = socket.getfqdn(socket.gethostname())
 myaddr = socket.gethostbyname(myname)
-monitor_result_dic=get_monitor_empty_dic('10.168.7.161')
+monitor_result_dic=get_monitor_empty_dic('192.168.1.130')
 #monitor_result_dic=get_monitor_empty_dic(myaddr)
 
 

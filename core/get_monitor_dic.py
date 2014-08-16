@@ -242,5 +242,5 @@ if __name__=='__main__':
     #serv_dic=get_service_dic()
     #print serv_dic
     #print get_monitor_empty_dic('10.168.0.218')
-    print get_all_host_monitor_dic('10.168.0.218')
+    print get_all_host_monitor_dic('10.168.1.130')
 #print get_monitor_host_list()

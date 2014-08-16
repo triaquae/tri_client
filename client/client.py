@@ -7,9 +7,9 @@ import plugin_conf
 import commands
 import importlib
 from monitor_data_deal import *
-HOST = '10.168.7.161'    # The remote host
+HOST = '192.168.1.130'    # The remote host
 PORT = 9998             # The same port as used by the server
-hostname = 'localhost'
+hostname = 'ztp_test'
 status_dic = {'services': {}}
 last_check_dic = {}
 interval_dic = {}

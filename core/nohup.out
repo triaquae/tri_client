@@ -181,3 +181,35 @@ SyntaxError: invalid syntax
 [31005] 30 Jul 15:59:01.136 * DB saved on disk
 [31005] 30 Jul 15:59:01.136 * RDB: 6 MB of memory used by copy-on-write
 [28176] 30 Jul 15:59:01.198 * Background saving terminated with success
+[5200] 08 Aug 14:33:49.643 # Warning: no config file specified, using the default config. In order to specify a config file use /usr/local/src/redis-2.8.13/src/redis-server /path/to/redis.conf
+[5200] 08 Aug 14:33:49.644 # You requested maxclients of 10000 requiring at least 10032 max file descriptors.
+[5200] 08 Aug 14:33:49.644 # Redis can't set maximum open files to 10032 because of OS error: Operation not permitted.
+[5200] 08 Aug 14:33:49.644 # Current maximum open files is 1024. maxclients has been reduced to 4064 to compensate for low ulimit. If you need higher maxclients increase 'ulimit -n'.
+[5200] 08 Aug 14:33:49.646 # Warning: 32 bit instance detected but no memory limit set. Setting 3 GB maxmemory limit with 'noeviction' policy now.
+                _._                                                  
+           _.-``__ ''-._                                             
+      _.-``    `.  `_.  ''-._           Redis 2.8.13 (00000000/0) 32 bit
+  .-`` .-```.  ```\/    _.,_ ''-._                                   
+ (    '      ,       .-`  | `,    )     Running in stand alone mode
+ |`-._`-...-` __...-.``-._|'` _.-'|     Port: 6379
+ |    `-._   `._    /     _.-'    |     PID: 5200
+  `-._    `-._  `-./  _.-'    _.-'                                   
+ |`-._`-._    `-.__.-'    _.-'_.-'|                                  
+ |    `-._`-._        _.-'_.-'    |           http://redis.io        
+  `-._    `-._`-.__.-'_.-'    _.-'                                   
+ |`-._`-._    `-.__.-'    _.-'_.-'|                                  
+ |    `-._`-._        _.-'_.-'    |                                  
+  `-._    `-._`-.__.-'_.-'    _.-'                                   
+      `-._    `-.__.-'    _.-'                                       
+          `-._        _.-'                                           
+              `-.__.-'                                               
+
+[5200] 08 Aug 14:33:49.646 # Server started, Redis version 2.8.13
+[5200] 08 Aug 14:33:49.646 # WARNING overcommit_memory is set to 0! Background save may fail under low memory condition. To fix this issue add 'vm.overcommit_memory = 1' to /etc/sysctl.conf and then reboot or run the command 'sysctl vm.overcommit_memory=1' for this to take effect.
+[5200] 08 Aug 14:33:49.646 * DB loaded from disk: 0.000 seconds
+[5200] 08 Aug 14:33:49.646 * The server is now ready to accept connections on port 6379
+[5200 | signal handler] (1407481173) Received SIGTERM, scheduling shutdown...
+[5200] 08 Aug 14:59:33.802 # User requested shutdown...
+[5200] 08 Aug 14:59:33.802 * Saving the final RDB snapshot before exiting.
+[5200] 08 Aug 14:59:33.805 * DB saved on disk
+[5200] 08 Aug 14:59:33.805 # Redis is now ready to exit, bye bye...

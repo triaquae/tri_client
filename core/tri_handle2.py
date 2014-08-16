@@ -15,9 +15,9 @@ import sys,trigger_formulas
 from utils import pprint 
 monitor_result_dic={}
 #get all hosts' monitor configuration out from DB 
-monitor_dic=  get_all_host_monitor_dic('10.168.7.161')
+monitor_dic=  get_all_host_monitor_dic('192.168.1.130')
 
-
+print '----------->', monitor_dic
 #获取redis中的数据
 def pull_status_data():
     #pull out status data from Redis
@@ -181,7 +181,7 @@ def trigger_handle(**kargs):
                             print 'no match'
     """                
 
-server_ip,port  = '10.168.7.161',9998
+server_ip,port  = '192.168.1.130',9998
 latest_monitor_data = push_status_data(server_ip, port)  #从redis中取出最新的监控数据
 
 #print latest_monitor_data

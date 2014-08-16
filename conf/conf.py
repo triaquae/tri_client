@@ -4,5 +4,5 @@
 #标识是否为代理服务
 proxy_server = 0
 
-server_master = '10.168.7.101'
+server_master = '192.168.1.115'
 port = 7001

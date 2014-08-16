@@ -19,7 +19,7 @@ server_port = conf.server_port
 #get all hosts' monitor configuration out from DB 
 monitor_dic=  get_all_host_monitor_dic(server_ip)
 
-print '----------->', monitor_dic
+#print '----------->', monitor_dic
 #��ȡredis�е����
 def pull_status_data():
     #pull out status data from Redis
@@ -188,16 +188,18 @@ latest_monitor_data = push_status_data(server_ip, port)  #��redis��ȡ�
 
 #print latest_monitor_data
 
-
-
 if isinstance(latest_monitor_data,dict):
+    #print latest_monitor_data
     #loop each host from DB 
+    #exit(0)
     for h,value in monitor_dic.items():
         print '\033[42;1m %s \033[0m' %h
         #print value
+        print "==============================aaaaaaa========================"
         if latest_monitor_data.has_key(h): #make sure host is in the lastest monitor data
             #loop each service in this host 
             for service_key, service_obj in value['service'].items():
+                print "-----------------------bbbbbb--------------------"
                 print '\033[41;1mservice_key:  %s  \033[0m check_interval: %s  trigger: %s '%( service_key, service_obj.check_interval, service_obj.trigger)
                 client_service_data = latest_monitor_data[h]['result_values'][service_key] #ȡ�������������¼�����
                 #print '++++|||',client_service_data
@@ -210,8 +212,10 @@ if isinstance(latest_monitor_data,dict):
                     #print service_obj.trigger.name
                 else: #if not trigger links , only store the data in redis
                     print 'no triiger for \033[31;1m%s\033[0m  will save this data to redis later' %service_key
+                print "-----------------------yyyyy---------------------"
 
         else: #no monitor data for this host , definitely something went wrong
             pprint("No monitor data for this host!" , 'err')
+        print "===============================zzzzzzz========="
 else:
     pprint('No ')

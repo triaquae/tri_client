@@ -7,57 +7,6 @@ import db_connector
 from triWeb.models import *
 from django.core.exceptions import ObjectDoesNotExist
 import get_config
-
-#得到一个空的监控字典
-'''
-def get_monitor_empty_dic():
-    monitor_dic={}
-    try:
-        for host_obj in IP.objects.all():
-            monitor_dic[host_obj.hostname]={'hostname':host_obj.hostname,'result_values':{}}
-            #monitor_dic={host_obj.hostname:{'hostname':host_obj.hostname,'result_values':{}}}
-            #得到每个主机的监控服务项
-            service_list=[]
-            template_list=[]
-            for g in host_obj.group.select_related():
-                for t in g.template_list.select_related():
-                    template_list.append( t.name)
-                    
-            for t in host_obj.template_list.select_related():
-                template_list.append( t.name)
-
-            for t_name in set(template_list):
-                t_obj = templates.objects.get( name = t_name)
-                service_list+=t_obj.service_list.values()
-            service_list+=host_obj.custom_services.values()
-            
-            #tmp_list=[]
-            #for service in service_list:
-                #tmp_list.append(service['name'])
-            #monitor_dic[host_obj.hostname]['service']=tmp_list
-            
-            #如果监控服务项为空
-            if len(service_list):
-                for service in service_list:
-                    monitor_dic[host_obj.hostname]['result_values'][service['name']]={}
-            else:
-                pass
-        return monitor_dic
-    except ObjectDoesNotExist,err:
-        print 'not get monitor dic...'
-
-#得到所有主机的监控服务项信息字典
-def get_all_host_monitor_dic():
-    monitor_dic={}
-    try:
-        for host_obj in IP.objects.all():
-            one_monitor_dic=get_config.get_config_for_host(host=host_obj.hostname)
-            monitor_dic[host_obj.hostname]=one_monitor_dic
-        return monitor_dic
-    except ObjectDoesNotExist,err:
-        print 'not get monitor dic...'
-        
-'''
         
 #得到一个server/proxy_server的空监控字典
 def get_monitor_empty_dic(server_ip):
@@ -98,7 +47,7 @@ def get_all_host_monitor_dic(server_ip):
     try:
         ts=trunk_servers.objects.get(ip_address=server_ip)
         for host_obj in ts.ip_set.all():
-            monitor_dic[host_obj.hostname]={"hostname":host_obj.hostname,'service':{}}
+            monitor_dic[host_obj.hostname]={}
             service_list=[]
             template_list=[]
             for g in host_obj.group.select_related():
@@ -119,7 +68,7 @@ def get_all_host_monitor_dic(server_ip):
                 for service in service_list:
                     #item_list=service.item_list.values()
                     #trigger_list=service.trigger_list.values()
-                    monitor_dic[host_obj.hostname]['service'][service.name]=service
+                    monitor_dic[host_obj.hostname][service.name]=service
             else:
                 pass
         return monitor_dic
@@ -242,5 +191,5 @@ if __name__=='__main__':
     #serv_dic=get_service_dic()
     #print serv_dic
     #print get_monitor_empty_dic('10.168.0.218')
-    print get_all_host_monitor_dic('10.168.1.130')
+    print get_all_host_monitor_dic('192.168.1.115')
 #print get_monitor_host_list()
